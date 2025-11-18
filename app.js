@@ -55,24 +55,13 @@ app.use(helmet({
 // ===========================================
 // 3. HARDENED CORS CONFIGURATION
 // ===========================================
+// CORS Configuration (environment-based)
 const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = env.ALLOWED_ORIGINS 
-      ? env.ALLOWED_ORIGINS.split(',')
-      : ['http://localhost:3000', 'http://localhost:5173'];
-    
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1 || env.NODE_ENV === 'development') {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:3000", "http://localhost:5173"],
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Signature', 'X-Timestamp']
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-api-key", "x-signature", "x-timestamp"]
 };
 
 app.use(cors(corsOptions));
