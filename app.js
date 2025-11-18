@@ -5,16 +5,15 @@ const swaggerUi = require('swagger-ui-express');
 const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
-const { generalLimiter } = require('./middleware/security');
 const swaggerSpec = require('./config/swagger');
 const env = require('./config/env');
 
 const app = express();
 
-// Trust proxy (required for Railway/Render)
+// Trust proxy
 app.set('trust proxy', 1);
 
-// Security middleware
+// Security
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
@@ -36,10 +35,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging
 app.use(requestLogger);
 
-// Rate limiting
-app.use('/api/', generalLimiter);
-
-// Swagger documentation
+// Swagger docs
 app.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   explorer: true,
   customCss: '.swagger-ui .topbar { display: none }',
@@ -49,7 +45,7 @@ app.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // API routes
 app.use('/api/v1', routes);
 
-// Root route for Railway/Render health checks
+// Root route
 app.get('/', (req, res) => {
   res.json({
     message: 'Bubble Backend API',
@@ -64,7 +60,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Simple health check endpoint
+// Health endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
@@ -79,13 +75,11 @@ app.use((req, res) => {
     status: 'error',
     code: 404,
     message: 'Endpoint not found',
-    path: req.path,
-    hint: 'API endpoints are under /api/v1/',
-    documentation: '/api/v1/api-docs'
+    path: req.path
   });
 });
 
-// Error handler (must be last)
+// Error handler (last)
 app.use(errorHandler);
 
 module.exports = app;
