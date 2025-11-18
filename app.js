@@ -1,56 +1,80 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
+const Sentry = require('@sentry/node');
+const { ProfilingIntegration } = require('@sentry/profiling-node');
 const routes = require('./routes');
-const env = require('./config/env');
+const { errorHandler } = require('./middleware/errorHandler');
 const { secureRequestLogger } = require('./middleware/secureLogger');
+const env = require('./config/env');
 
 const app = express();
 
-app.set('trust proxy', 1);
+// ===========================================
+// 1. SENTRY INITIALIZATION (Production only)
+// ===========================================
+if (env.NODE_ENV === 'production' && env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: env.SENTRY_DSN,
+    environment: env.NODE_ENV,
+    integrations: [
+      new Sentry.Integrations.Http({ tracing: true }),
+      new Sentry.Integrations.Express({ app }),
+      new ProfilingIntegration(),
+    ],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+  });
 
-// Hardened Helmet configuration
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
+}
+
+// ===========================================
+// 2. HARDENED HELMET CONFIGURATION
+// ===========================================
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'"],
-      fontSrc: ["'self'"],
-      objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
-      frameSrc: ["'none'"],
+      imgSrc: ["'self'", "data:", "https:"],
     },
   },
-  crossOriginEmbedderPolicy: true,
-  crossOriginOpenerPolicy: true,
-  crossOriginResourcePolicy: { policy: "same-site" },
-  dnsPrefetchControl: true,
-  frameguard: { action: 'deny' },
-  hidePoweredBy: true,
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true
   },
-  ieNoOpen: true,
+  frameguard: { action: 'deny' },
   noSniff: true,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  xssFilter: true,
+  xssFilter: true
 }));
 
-// Hardened CORS - restrict in production
+// ===========================================
+// 3. HARDENED CORS CONFIGURATION
+// ===========================================
 const corsOptions = {
-  origin: env.NODE_ENV === 'production' 
-    ? (env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(',') : '*')
-    : '*',
+  origin: function (origin, callback) {
+    const allowedOrigins = env.ALLOWED_ORIGINS 
+      ? env.ALLOWED_ORIGINS.split(',')
+      : ['http://localhost:3000', 'http://localhost:5173'];
+    
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
+  optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-api-key', 'x-signature', 'x-timestamp'],
-  maxAge: 86400
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-Signature', 'X-Timestamp']
 };
+
 app.use(cors(corsOptions));
 
 // Body parsing
@@ -68,22 +92,18 @@ app.get('/', (req, res) => {
   res.json({
     message: 'Bubble Backend API',
     version: '1.0.0',
-    status: 'operational'
+    status: 'operational',
+    environment: env.NODE_ENV
   });
 });
 
-// Health check
-app.get('/health', (req, res) => {
-  res.json({ status: 'healthy' });
-});
+// ===========================================
+// 4. ERROR HANDLERS
+// ===========================================
+if (env.NODE_ENV === 'production' && env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-// Error handler
-const { errorHandler } = require('./middleware/errorHandler');
 app.use(errorHandler);
 
 module.exports = app;
