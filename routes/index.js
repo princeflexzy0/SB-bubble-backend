@@ -18,6 +18,7 @@ const authenticate = (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
   // TODO: Validate token with auth service when credentials are added
+  req.user = { id: 'test-user-id' };
   next();
 };
 

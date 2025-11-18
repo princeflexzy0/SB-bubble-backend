@@ -2,7 +2,6 @@ const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
 const { getRedisClient } = require('../config/redis');
 
-// Try to get Redis client, fall back to memory store
 let store;
 try {
   const redisClient = getRedisClient();
@@ -10,16 +9,19 @@ try {
     client: redisClient,
     prefix: 'rl:',
   });
-  console.log('✅ Using Redis for rate limiting');
+  if (process.env.NODE_ENV === 'production') {
+    console.log('✅ Using Redis for rate limiting');
+  }
 } catch (error) {
-  console.warn('⚠️ Redis not available, using memory store for rate limiting');
-  store = undefined; // Express-rate-limit will use memory store
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Redis not available, using memory store for rate limiting');
+  }
+  store = undefined;
 }
 
-// General rate limiter
 const generalLimiter = rateLimit({
   store: store,
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: {
     status: 'error',
@@ -30,7 +32,6 @@ const generalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Strict limiter for auth endpoints
 const authLimiter = rateLimit({
   store: store,
   windowMs: 15 * 60 * 1000,
@@ -43,7 +44,6 @@ const authLimiter = rateLimit({
   skipSuccessfulRequests: true
 });
 
-// Payment endpoint limiter
 const paymentLimiter = rateLimit({
   store: store,
   windowMs: 15 * 60 * 1000,
@@ -55,7 +55,6 @@ const paymentLimiter = rateLimit({
   }
 });
 
-// AI endpoint limiter
 const aiLimiter = rateLimit({
   store: store,
   windowMs: 15 * 60 * 1000,
@@ -67,10 +66,9 @@ const aiLimiter = rateLimit({
   }
 });
 
-// File upload limiter
 const uploadLimiter = rateLimit({
   store: store,
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 50,
   message: {
     status: 'error',
@@ -79,7 +77,6 @@ const uploadLimiter = rateLimit({
   }
 });
 
-// API key validation middleware
 const validateApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
   const env = require('../config/env');
@@ -92,6 +89,7 @@ const validateApiKey = (req, res, next) => {
     });
   }
   
+  // Return 403 for INVALID key (not 401)
   if (apiKey !== env.INTERNAL_API_KEY) {
     return res.status(403).json({
       status: 'error',

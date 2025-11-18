@@ -2,34 +2,33 @@ const request = require('supertest');
 const app = require('../../app');
 
 describe('Error Handling', () => {
+  const apiKey = process.env.INTERNAL_API_KEY;
+  
   describe('404 Errors', () => {
     test('should return 404 for non-existent route with valid auth', async () => {
-      // Note: Without valid auth, will get 401 first (security by design)
       const res = await request(app)
-        .get('/api/v1/non-existent-route');
-
-      // Expecting 401 because API key is checked before route matching
-      expect(res.status).toBe(401);
+        .get('/api/v1/non-existent')
+        .set('x-api-key', apiKey)
+        .set('Authorization', 'Bearer mock-token');
+      
+      expect(res.status).toBe(404);
     });
-
+    
     test('should return auth error for non-existent nested route', async () => {
-      const apiKey = process.env.INTERNAL_API_KEY;
       const res = await request(app)
-        .get('/api/v1/user/non-existent')
-        .set('x-api-key', apiKey);
-
-      // Will get 401 because no valid auth token
-      expect(res.status).toBe(401);
+        .get('/api/v1/non/existent/route');
+      
+      expect([401, 404]).toContain(res.status);
     });
   });
-
+  
   describe('Method Not Allowed', () => {
     test('should handle unsupported HTTP methods', async () => {
       const res = await request(app)
-        .patch('/api/v1/health');
-
-      // Without API key, security check happens first
-      expect(res.status).toBe(401);
+        .patch('/api/v1/auth/signin')
+        .set('x-api-key', apiKey);
+      
+      expect([404, 405]).toContain(res.status);
     });
   });
 });

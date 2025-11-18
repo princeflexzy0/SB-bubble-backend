@@ -8,7 +8,6 @@ describe('Input Validation', () => {
     test('should reject invalid email format in signup', async () => {
       const res = await request(app)
         .post('/api/v1/auth/signup')
-        .set('x-api-key', apiKey)
         .send({
           email: 'invalid-email',
           password: 'Password123!'
@@ -22,12 +21,11 @@ describe('Input Validation', () => {
     test('should reject missing required fields', async () => {
       const res = await request(app)
         .post('/api/v1/auth/signup')
-        .set('x-api-key', apiKey)
         .send({});
       
       expect(res.status).toBe(400);
-      // More lenient check - just ensure there's an error message
-      expect(res.body.message || res.body.error).toBeTruthy();
+      // Make case-insensitive check
+      expect((res.body.message || '').toLowerCase()).toContain('required');
     });
   });
   
@@ -39,7 +37,8 @@ describe('Input Validation', () => {
         .set('Authorization', 'Bearer mock-token')
         .send({});
       
-      expect([400, 401]).toContain(res.status);
+      // Check res.status is one of the accepted values
+      expect(res.status === 400 || res.status === 401).toBe(true);
     });
   });
   
@@ -53,7 +52,7 @@ describe('Input Validation', () => {
           currency: 'USD'
         });
       
-      expect([400, 401]).toContain(res.status);
+      expect(res.status === 400 || res.status === 401).toBe(true);
     });
   });
   
@@ -65,7 +64,7 @@ describe('Input Validation', () => {
         .set('Authorization', 'Bearer mock-token')
         .send({});
       
-      expect([400, 401]).toContain(res.status);
+      expect(res.status === 400 || res.status === 401).toBe(true);
     });
   });
 });
