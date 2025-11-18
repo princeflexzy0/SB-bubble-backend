@@ -5,7 +5,7 @@ const swaggerUi = require('swagger-ui-express');
 const routes = require('./routes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { requestLogger } = require('./middleware/requestLogger');
-const { setupSecurity } = require('./middleware/security');
+const { generalLimiter } = require('./middleware/security');
 const swaggerSpec = require('./config/swagger');
 const env = require('./config/env');
 
@@ -16,7 +16,7 @@ app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable for Swagger UI
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
@@ -36,8 +36,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging
 app.use(requestLogger);
 
-// Setup rate limiting and other security
-setupSecurity(app);
+// Rate limiting
+app.use('/api/', generalLimiter);
 
 // Swagger documentation
 app.use('/api/v1/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -64,7 +64,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Simple health check endpoint (for Railway/Render)
+// Simple health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy',
@@ -73,7 +73,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 404 handler for unknown routes
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     status: 'error',
