@@ -2,20 +2,21 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authLimiter } = require('../middleware/security');
+const { validate, schemas } = require('../middleware/validation');
 
 /**
  * @route   POST /api/v1/auth/signup
  * @desc    Register new user
  * @access  Public
  */
-router.post('/signup', authLimiter, authController.signUp);
+router.post('/signup', authLimiter, validate(schemas.signup), authController.signUp);
 
 /**
  * @route   POST /api/v1/auth/signin
  * @desc    Sign in user
  * @access  Public
  */
-router.post('/signin', authLimiter, authController.signIn);
+router.post('/signin', authLimiter, validate(schemas.signin), authController.signIn);
 
 /**
  * @route   POST /api/v1/auth/signout
