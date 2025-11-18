@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Backend API - Live Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .status { 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .test-section {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+        .config {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>�� Bubble Backend API</h1>
+        <p class="subtitle">Live Testing Interface</p>
+
+        <div class="config">
+            <strong>⚙️ Configuration:</strong>
+            <input type="text" id="baseUrl" value="http://localhost:3000/api/v1" placeholder="Base URL">
+            <input type="text" id="apiKey" value="test-bubble-api-key-12345" placeholder="API Key">
+        </div>
+
+        <div id="status"></div>
+
+        <!-- Health Check -->
+        <div class="test-section">
+            <h3>1️⃣ Health Check (No Auth Required)</h3>
+            <button onclick="testHealth()">Test Health Endpoint</button>
+            <pre id="healthResult">Click button to test...</pre>
+        </div>
+
+        <!-- Root Endpoint -->
+        <div class="test-section">
+            <h3>2️⃣ Root Endpoint</h3>
+            <button onclick="testRoot()">Test Root</button>
+            <pre id="rootResult">Click button to test...</pre>
+        </div>
+
+        <!-- Security Test -->
+        <div class="test-section">
+            <h3>3️⃣ Security Test (Should Block Without API Key)</h3>
+            <button onclick="testSecurity()">Test Without API Key</button>
+            <pre id="securityResult">Click button to test...</pre>
+        </div>
+
+        <!-- Signup Test -->
+        <div class="test-section">
+            <h3>4️⃣ Signup Test (Will Fail Without Supabase)</h3>
+            <button onclick="testSignup()">Test Signup</button>
+            <pre id="signupResult">Click button to test...</pre>
+        </div>
+
+        <!-- Swagger Docs -->
+        <div class="test-section">
+            <h3>5️⃣ API Documentation</h3>
+            <button onclick="openSwagger()">Open Swagger Docs</button>
+            <p style="margin-top: 10px; color: #666;">Opens interactive API documentation in new tab</p>
+        </div>
+
+        <!-- Test All -->
+        <div class="grid">
+            <button onclick="testAll()" style="background: #28a745;">🧪 Run All Tests</button>
+            <button onclick="location.reload()" style="background: #6c757d;">🔄 Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const getBaseUrl = () => document.getElementById('baseUrl').value;
+        const getApiKey = () => document.getElementById('apiKey').value;
+
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span> ${message}`;
+        }
+
+        async function testHealth() {
+            showStatus('Testing health endpoint...', 'info');
+            try {
+                const response = await fetch(`${getBaseUrl()}/health`);
+                const data = await response.json();
+                document.getElementById('healthResult').textContent = JSON.stringify(data, null, 2);
+                showStatus('Health check successful!', 'success');
+            } catch (error) {
+                document.getElementById('healthResult').textContent = `Error: ${error.message}`;
+                showStatus('Health check failed!', 'error');
+            }
+        }
+
+        async function testRoot() {
+            showStatus('Testing root endpoint...', 'info');
+            try {
+                const response = await fetch(getBaseUrl().replace('/api/v1', ''));
+                const data = await response.json();
+                document.getElementById('rootResult').textContent = JSON.stringify(data, null, 2);
+                showStatus('Root endpoint successful!', 'success');
+            } catch (error) {
+                document.getElementById('rootResult').textContent = `Error: ${error.message}`;
+                showStatus('Root endpoint failed!', 'error');
+            }
+        }
+
+        async function testSecurity() {
+            showStatus('Testing security (without API key)...', 'info');
+            try {
+                const response = await fetch(`${getBaseUrl()}/user/profile`);
+                const data = await response.json();
+                document.getElementById('securityResult').textContent = JSON.stringify(data, null, 2);
+                if (response.status === 401) {
+                    showStatus('Security working! (Correctly blocked unauthorized request)', 'success');
+                } else {
+                    showStatus('Unexpected response', 'error');
+                }
+            } catch (error) {
+                document.getElementById('securityResult').textContent = `Error: ${error.message}`;
+                showStatus('Request failed', 'error');
+            }
+        }
+
+        async function testSignup() {
+            showStatus('Testing signup...', 'info');
+            try {
+                const response = await fetch(`${getBaseUrl()}/auth/signup`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': getApiKey()
+                    },
+                    body: JSON.stringify({
+                        email: 'test@example.com',
+                        password: 'Test123!'
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('signupResult').textContent = JSON.stringify(data, null, 2);
+                showStatus('Signup endpoint responding (fails without Supabase - expected)', 'info');
+            } catch (error) {
+                document.getElementById('signupResult').textContent = `Error: ${error.message}`;
+                showStatus('Signup test failed', 'error');
+            }
+        }
+
+        function openSwagger() {
+            window.open(`${getBaseUrl()}/api-docs`, '_blank');
+        }
+
+        async function testAll() {
+            showStatus('Running all tests...', 'info');
+            await testHealth();
+            await new Promise(r => setTimeout(r, 500));
+            await testRoot();
+            await new Promise(r => setTimeout(r, 500));
+            await testSecurity();
+            await new Promise(r => setTimeout(r, 500));
+            await testSignup();
+            showStatus('All tests completed!', 'success');
+        }
+
+        // Auto-test health on load
+        window.onload = () => {
+            setTimeout(testHealth, 500);
+        };
+    </script>
+</body>
+</html>
