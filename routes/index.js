@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { validateInternalApiKey } = require('../middleware/security');
+const { validateApiKey } = require('../middleware/security');
 const authService = require('../services/auth.service');
 const { AppError } = require('../middleware/errorHandler');
 
@@ -56,8 +56,8 @@ router.use('/health', healthRoutes);
 // Auth routes (public with rate limiting)
 router.use('/auth', authRoutes);
 
-// Apply internal API key validation to all other routes
-router.use(validateInternalApiKey);
+// Apply API key validation to all other routes
+router.use(validateApiKey);
 
 // Apply authentication to all protected routes
 router.use(authenticate);
