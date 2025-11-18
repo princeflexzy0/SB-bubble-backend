@@ -1,116 +1,213 @@
-const authService = require('../services/auth.service');
-const { AppError } = require('../middleware/errorHandler');
+const { createClient } = require('@supabase/supabase-js');
+const env = require('../config/env');
+
+const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
 class AuthController {
-  async signUp(req, res, next) {
+  async signUp(req, res) {
     try {
-      const { email, password, full_name } = req.body;
-
+      const { email, password, name } = req.body;
+      
+      // Validate required fields
       if (!email || !password) {
-        throw new AppError('Email and password are required', 400);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Email and password are required'
+        });
       }
-
-      const result = await authService.signUp(email, password, { full_name });
-
+      
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name }
+        }
+      });
+      
+      if (error) {
+        console.error('Sign up error', { error: error.message });
+        return res.status(400).json({
+          status: 'error',
+          message: error.message
+        });
+      }
+      
       res.status(201).json({
         status: 'success',
         data: {
-          user: result.user,
-          session: result.session
+          user: data.user,
+          session: data.session
         }
       });
     } catch (error) {
-      next(error);
+      console.error('Sign up error', { error: error.message });
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
-
-  async signIn(req, res, next) {
+  
+  async signIn(req, res) {
     try {
       const { email, password } = req.body;
-
+      
+      // Validate required fields
       if (!email || !password) {
-        throw new AppError('Email and password are required', 400);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Email and password are required'
+        });
       }
-
-      const result = await authService.signIn(email, password);
-
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        return res.status(401).json({
+          status: 'error',
+          message: error.message
+        });
+      }
+      
       res.status(200).json({
         status: 'success',
         data: {
-          user: result.user,
-          session: result.session
+          user: data.user,
+          session: data.session
         }
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
-
-  async signOut(req, res, next) {
+  
+  async signOut(req, res) {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      await authService.signOut(token);
-
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        return res.status(400).json({
+          status: 'error',
+          message: error.message
+        });
+      }
+      
       res.status(200).json({
         status: 'success',
         message: 'Signed out successfully'
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
-
-  async refreshToken(req, res, next) {
+  
+  async refreshToken(req, res) {
     try {
       const { refresh_token } = req.body;
-
+      
       if (!refresh_token) {
-        throw new AppError('Refresh token is required', 400);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Refresh token is required'
+        });
       }
-
-      const result = await authService.refreshToken(refresh_token);
-
+      
+      const { data, error } = await supabase.auth.refreshSession({
+        refresh_token
+      });
+      
+      if (error) {
+        return res.status(401).json({
+          status: 'error',
+          message: error.message
+        });
+      }
+      
       res.status(200).json({
         status: 'success',
         data: {
-          session: result.session
+          session: data.session
         }
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
-
-  async resetPassword(req, res, next) {
+  
+  async resetPassword(req, res) {
     try {
       const { email } = req.body;
-
+      
+      // Validate required field
       if (!email) {
-        throw new AppError('Email is required', 400);
+        return res.status(400).json({
+          status: 'error',
+          message: 'Email is required'
+        });
       }
-
-      await authService.resetPasswordRequest(email);
-
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) {
+        return res.status(400).json({
+          status: 'error',
+          message: error.message
+        });
+      }
+      
       res.status(200).json({
         status: 'success',
         message: 'Password reset email sent'
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
-
-  async getMe(req, res, next) {
+  
+  async getMe(req, res) {
     try {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      const user = await authService.getUserByToken(token);
-
+      const token = req.headers.authorization?.split(' ')[1];
+      
+      if (!token) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'No token provided'
+        });
+      }
+      
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error || !user) {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Invalid token'
+        });
+      }
+      
       res.status(200).json({
         status: 'success',
         data: { user }
       });
     } catch (error) {
-      next(error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal server error'
+      });
     }
   }
 }
