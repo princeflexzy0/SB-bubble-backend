@@ -10,6 +10,11 @@ const env = cleanEnv(process.env, {
   API_VERSION: str({ default: 'v1' }),
 
   // Required Security Keys (always required)
+  // SECURITY NOTE: Default values below are PLACEHOLDER values only for initial deployment.
+  // These are intentionally obvious placeholders that MUST be replaced with real secrets.
+  // Real secrets should ONLY be set via environment variables in production.
+  // Never commit actual API keys, passwords, or secrets to this file.
+
   JWT_SECRET: str({ default: isDeployment ? 'temp-jwt-secret-replace-me' : undefined }),
   ENCRYPTION_KEY: str({ default: isDeployment ? 'temp-encryption-key-replace-me' : undefined }),
   INTERNAL_API_KEY: str({ default: isDeployment ? 'temp-internal-key-replace-me' : undefined }),
