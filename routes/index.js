@@ -10,7 +10,7 @@ const authRoutes = require('./auth.routes');
 const userRoutes = require('./user.routes');
 const fileRoutes = require('./file.routes');
 const paymentRoutes = require('./payment.routes');
-const messagingRoutes = require('./messaging.routes');
+// const messagingRoutes = require('./messaging.routes');
 const aiRoutes = require('./ai.routes');
 const workflowRoutes = require('./workflow.routes');
 const healthRoutes = require('./health.routes');
@@ -43,7 +43,7 @@ router.use('/auth', authRoutes);
 router.use('/user', validateApiKey, authenticate, userRoutes);
 router.use('/files', validateApiKey, authenticate, fileRoutes);
 router.use('/pay', validateApiKey, authenticate, paymentRoutes);
-router.use('/msg', validateApiKey, authenticate, messagingRoutes);
+// router.use("/msg", messagingRoutes););
 router.use('/ai', validateApiKey, authenticate, aiRoutes);
 router.use('/flow', validateApiKey, authenticate, workflowRoutes);
 
