@@ -1,4 +1,4 @@
-const { cleanEnv, str, url } = require('envalid');
+const { cleanEnv, str } = require('envalid');
 
 module.exports = cleanEnv(process.env, {
   NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
@@ -37,4 +37,5 @@ module.exports = cleanEnv(process.env, {
   AWS_ACCESS_KEY_ID: str({ default: '' }),
   AWS_SECRET_ACCESS_KEY: str({ default: '' }),
   AWS_S3_BUCKET: str({ default: '' }),
+  AWS_REGION: str({ default: 'us-east-1' }),  // ← ADDED THIS!
 });
