@@ -26,7 +26,7 @@ class RegionService {
       }
 
       // Query Supabase
-      let query = supabase
+      const query = supabase
         .from('tenant_regions')
         .select('supported_features')
         .eq('country_code', countryCode)
