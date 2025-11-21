@@ -3,7 +3,7 @@
  * Handles email and SMS operations
  */
 
-exports.sendEmail = async (req, res) => {
+const sendEmail = async (req, res) => {
   try {
     // TODO: Implement SendGrid email sending
     res.json({
@@ -18,7 +18,7 @@ exports.sendEmail = async (req, res) => {
   }
 };
 
-exports.sendSMS = async (req, res) => {
+const sendSMS = async (req, res) => {
   try {
     // TODO: Implement Twilio SMS sending
     res.json({
@@ -31,4 +31,9 @@ exports.sendSMS = async (req, res) => {
       message: error.message
     });
   }
+};
+
+module.exports = {
+  sendEmail,
+  sendSMS
 };
