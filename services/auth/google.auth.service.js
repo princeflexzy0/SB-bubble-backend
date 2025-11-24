@@ -88,7 +88,7 @@ const handleGoogleCallback = async (code, metadata = {}) => {
       [user.id, metadata.ipAddress, metadata.userAgent]
     );
 
-    const tokens = await generateTokenPair(user, metadata);
+    const authTokens = await generateTokenPair(user, metadata);
 
     logger.info('Google authentication successful', { userId: user.id, isNewUser });
 
@@ -98,7 +98,7 @@ const handleGoogleCallback = async (code, metadata = {}) => {
         email: user.email,
         emailVerified: true,
       },
-      tokens,
+      tokens: authTokens,
       isNewUser,
     };
   } catch (error) {

@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { query } = require('../../config/database');
-const { generateTokenPair, verifyRefreshToken, revokeRefreshToken, revokeAllUserTokens } = require('../../utils/jwt.util');
+const { generateTokenPair, verifyRefreshToken, revokeRefreshToken } = require('../../utils/jwt.util');
 const googleAuthService = require('../../services/auth/google.auth.service');
 const { createLogger } = require('../../config/monitoring');
 
@@ -8,7 +8,7 @@ const logger = createLogger('auth-controller');
 
 const register = async (req, res) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password } = req.body;
 
     const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {

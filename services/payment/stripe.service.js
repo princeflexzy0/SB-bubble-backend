@@ -4,7 +4,7 @@ const { createLogger } = require('../../config/monitoring');
 
 const logger = createLogger('stripe-service');
 
-const createCustomer = async (userId, email, metadata = {}) => {
+const createCustomer = async (userId, email) => {
   try {
     const stripeCustomer = await stripe.customers.create({
       email,

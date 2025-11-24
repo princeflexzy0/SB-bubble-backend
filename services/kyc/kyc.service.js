@@ -1,6 +1,5 @@
 const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
-const crypto = require('crypto');
 
 const logger = createLogger('kyc-service');
 
