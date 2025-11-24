@@ -147,3 +147,12 @@ if (env.NODE_ENV === 'production' && env.SENTRY_DSN) {
 app.use(errorHandler);
 
 module.exports = app;
+
+// KYC, Auth & Payment Routes
+const authRoutes = require('./routes/auth/auth.routes');
+const kycRoutes = require('./routes/kyc/kyc.routes');
+const paymentRoutes = require('./routes/payment/payment.routes');
+
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/kyc', kycRoutes);
+app.use('/api/v1/payment', paymentRoutes);
