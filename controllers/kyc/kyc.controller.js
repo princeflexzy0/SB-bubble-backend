@@ -1,8 +1,9 @@
 const kycService = require('../../services/kyc/kyc.service');
-const s3Service = require('../../services/storage/s3.service');
-const otpService = require('../../services/otp.service');
+const { createLogger } = require('../../config/monitoring');
+const logger = createLogger('kyc-controller');
 const { query } = require('../../config/database');
-const crypto = require('crypto');
+const otpService = require('../../services/kyc/otp.service');
+const s3Service = require('../../services/storage/s3.service');
 
 const startKYC = async (req, res) => {
   try {
@@ -38,77 +39,6 @@ const getOptions = async (req, res) => {
   }
 };
 
-const getUploadUrl = async (req, res) => {
-  try {
-    const { kycSessionId, idType, fileName, fileMime } = req.body;
-
-    await query(
-      `UPDATE kyc_sessions SET selected_id_type = $1 WHERE id = $2 AND user_id = $3`,
-      [idType, kycSessionId, req.userId]
-    );
-
-    const result = await s3Service.generatePresignedUploadUrl(
-      fileName,
-      fileMime,
-      req.userId,
-      kycSessionId
-    );
-
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-const confirmUpload = async (req, res) => {
-  try {
-    const { kycSessionId, fileKey, fileName, fileSize, fileMime } = req.body;
-
-    const fileHash = crypto.randomBytes(32).toString('hex');
-
-    await query(
-      `INSERT INTO kyc_documents (kyc_session_id, user_id, doc_type, s3_key, s3_bucket, file_name, file_size_bytes, file_mime, file_hash, scan_status)
-       SELECT $1, $2, selected_id_type, $3, $4, $5, $6, $7, $8, 'pending'
-       FROM kyc_sessions WHERE id = $1`,
-      [kycSessionId, req.userId, fileKey, process.env.AWS_S3_BUCKET, fileName, fileSize, fileMime, fileHash]
-    );
-
-    await query(
-      `UPDATE kyc_sessions SET status = 'pending_otp', updated_at = NOW() WHERE id = $1`,
-      [kycSessionId]
-    );
-
-    res.json({ success: true, data: { scanStatus: 'pending', next: 'otp' } });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-const sendOTP = async (req, res) => {
-  try {
-    const { kycSessionId, method, destination } = req.body;
-    const result = await otpService.createOTP(kycSessionId, req.userId, method, destination);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-const verifyOTP = async (req, res) => {
-  try {
-    const { kycSessionId, otp } = req.body;
-    const result = await otpService.verifyOTP(kycSessionId, otp);
-
-    await query(
-      `UPDATE kyc_sessions SET status = 'processing', updated_at = NOW() WHERE id = $1`,
-      [kycSessionId]
-    );
-
-    res.json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-};
 
 const getStatus = async (req, res) => {
   try {
@@ -164,7 +94,6 @@ const sendOTP = async (req, res) => {
       });
     }
 
-    const otpService = require('../../services/kyc/otp.service');
     const result = await otpService.createAndSendOTP(kycSessionId, userId, method, destination);
 
     res.json({
@@ -192,7 +121,6 @@ const verifyOTP = async (req, res) => {
       });
     }
 
-    const otpService = require('../../services/kyc/otp.service');
     const result = await otpService.verifyOTP(kycSessionId, userId, otp);
 
     res.json({
@@ -223,7 +151,6 @@ const getUploadUrl = async (req, res) => {
       });
     }
 
-    const s3Service = require('../../services/storage/s3.service');
     const { presignedUrl, fileKey, expiresIn } = await s3Service.getPresignedUploadUrl(
       fileName,
       fileType,
@@ -275,7 +202,6 @@ const confirmUpload = async (req, res) => {
     }
 
     // Verify file exists
-    const s3Service = require('../../services/storage/s3.service');
     const exists = await s3Service.fileExists(fileKey);
 
     if (!exists) {

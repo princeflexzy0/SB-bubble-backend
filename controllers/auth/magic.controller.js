@@ -16,7 +16,7 @@ const sendMagicLink = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Email required' });
     }
 
-    const { magicUrl, email: userEmail } = await magicLinkService.generateMagicLink(email);
+    const { magicUrl } = await magicLinkService.generateMagicLink(email);
 
     // TODO: Send email with magicUrl
     // For now, return it (in production, never return the link!)
