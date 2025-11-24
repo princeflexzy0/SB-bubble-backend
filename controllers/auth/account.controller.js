@@ -87,7 +87,7 @@ const cancelAccountDeletion = async (req, res) => {
 
     const result = await query(
       `UPDATE data_deletion_requests 
-       SET status = 'cancelled', updated_at = NOW()
+       SET status = 'cancelled'
        WHERE user_id = $1 AND status = 'pending'
        RETURNING id`,
       [userId]
