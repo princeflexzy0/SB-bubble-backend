@@ -104,7 +104,7 @@ app.use((req, res, next) => {
 // 7. HMAC VALIDATION (GLOBAL MOUNTING)
 // ===========================================
 app.use('/api/v1', (req, res, next) => {
-  const publicRoutes = ['/health', '/auth/signin', '/auth/signup', '/auth/refresh', '/auth/csrf-token'];
+  const publicRoutes = ['/health', '/auth/signin', '/auth/signup', '/auth/register', '/auth/login', '/auth/refresh', '/auth/google/start', '/auth/google/callback', '/auth/csrf-token'];
   const isPublicRoute = publicRoutes.some(route => req.path.startsWith(route));
   const isWebhook = req.path.includes('/webhook');
   
