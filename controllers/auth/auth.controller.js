@@ -260,3 +260,24 @@ const appleCallback = async (req, res) => {
 
 module.exports.appleStart = appleStart;
 module.exports.appleCallback = appleCallback;
+
+// Export all methods with both naming conventions
+module.exports.signUp = register;
+module.exports.register = register;
+module.exports.signIn = login;
+module.exports.login = login;
+module.exports.signOut = logout;
+module.exports.logout = logout;
+module.exports.refreshToken = refresh;
+module.exports.refresh = refresh;
+module.exports.resetPassword = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+module.exports.verifyEmail = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+module.exports.getMe = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+module.exports.googleStart = googleStart;
+module.exports.googleCallback = googleCallback;
