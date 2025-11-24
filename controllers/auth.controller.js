@@ -124,9 +124,37 @@ const verifyEmail = async (req, res) => {
 };
 
 module.exports = {
+};
   signUp,
   signIn,
   signOut,
   resetPassword,
   verifyEmail,
+};
+
+const refreshToken = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+const getMe = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+
+const refreshToken = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+const getMe = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+module.exports = {
+  signUp,
+  signIn,
+  signOut,
+  refreshToken,
+  resetPassword,
+  verifyEmail,
+  getMe,
 };
