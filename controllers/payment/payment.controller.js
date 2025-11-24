@@ -130,3 +130,32 @@ module.exports = {
   getSubscription,
   handleWebhook,
 };
+
+// Legacy payment methods (not implemented yet, return 501)
+module.exports.createStripePayment = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Use /create-customer and /create-subscription instead' });
+};
+
+module.exports.createPayPalPayment = async (req, res) => {
+  res.status(501).json({ success: false, message: 'PayPal not implemented yet' });
+};
+
+module.exports.confirmPayment = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+module.exports.refundPayment = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+module.exports.getTransaction = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Not implemented yet' });
+};
+
+module.exports.stripeWebhook = async (req, res) => {
+  res.status(501).json({ success: false, message: 'Webhook not implemented yet' });
+};
+
+module.exports.paypalWebhook = async (req, res) => {
+  res.status(501).json({ success: false, message: 'PayPal not implemented yet' });
+};
