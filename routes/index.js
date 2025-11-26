@@ -6,10 +6,10 @@ const { authenticate } = require('../middleware/auth.middleware');
 const { validateApiKey } = require('../middleware/security');
 
 // Import route modules
-const authRoutes = require('./auth.routes');
+const authRoutes = require('./auth/auth.routes');
 const userRoutes = require('./user.routes');
 const fileRoutes = require('./file.routes');
-const paymentRoutes = require('./payment.routes');
+const paymentRoutes = require('./payment/payment.routes');
 // const messagingRoutes = require('./messaging.routes');
 const aiRoutes = require('./ai.routes');
 const workflowRoutes = require('./workflow.routes');
