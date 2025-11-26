@@ -1,24 +1,46 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate } = require('../../middleware/auth.middleware');
 const authController = require('../../controllers/auth/auth.controller');
+const { authenticate } = require('../../middleware/auth.middleware');
+const { authLimiter } = require('../../middleware/security');
+const { loginBruteForce, passwordResetBruteForce, signupBruteForce } = require('../../middleware/bruteForce.middleware');
+const { auditLog, SENSITIVE_ACTIONS } = require('../../middleware/auditLog.middleware');
+const { csrfProtection, getCsrfToken } = require('../../middleware/csrf.middleware');
 
-router.post('/register', authController.register);
-router.post('/login', authController.login);
-router.post('/refresh', authController.refresh);
-router.post('/logout', authController.logout);
+// ==========================================
+// PUBLIC ROUTES
+// ==========================================
+
+// CSRF Token
+router.get('/csrf-token', csrfProtection, getCsrfToken);
+
+// Registration & Login
+router.post('/signup', signupBruteForce, auditLog(SENSITIVE_ACTIONS.ACCOUNT_CREATED, 'user'), authController.register);
+router.post('/signin', loginBruteForce, authController.login);
+router.post('/register', signupBruteForce, authController.register); // Alias
+router.post('/login', loginBruteForce, authController.login); // Alias
+
+// OAuth
 router.get('/google/start', authController.googleStart);
 router.post('/google/callback', authController.googleCallback);
-
-module.exports = router;
-
-// Apple Sign-In routes
 router.get('/apple/start', authController.appleStart);
 router.post('/apple/callback', authController.appleCallback);
 
-// Account Linking
+// Password Reset
+router.post('/reset-password', passwordResetBruteForce, authController.resetPassword);
+
+// Token Management
+router.post('/refresh', authLimiter, authController.refresh);
+router.post('/signout', authLimiter, authController.logout);
+router.post('/logout', authLimiter, authController.logout); // Alias
+
+// ==========================================
+// PROTECTED ROUTES (require authentication)
+// ==========================================
+
+router.get('/me', authenticate, authController.getMe);
+router.post('/change-password', authenticate, authController.changePassword);
 router.post('/link/google', authenticate, authController.linkGoogle);
 router.post('/link/apple', authenticate, authController.linkApple);
 
-// Password Management
-router.post('/change-password', authenticate, authController.changePassword);
+module.exports = router;
