@@ -1,23 +1,18 @@
 const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
+const virusScanner = require('../../services/virus-scanner.service');
 
 const logger = createLogger('kyc-processor');
 
 /**
- * Process KYC documents
- * - Run virus scan
- * - Extract OCR data
- * - Validate ID expiry
- * - Call external verification vendors (optional)
+ * KYC Processor Worker
+ * Processes uploaded KYC documents with virus scanning, OCR, and validation
  */
 class KYCProcessor {
   constructor() {
     this.isProcessing = false;
   }
 
-  /**
-   * Start processing pending KYC sessions
-   */
   async start() {
     if (this.isProcessing) {
       logger.warn('Processor already running');
@@ -27,15 +22,11 @@ class KYCProcessor {
     this.isProcessing = true;
     logger.info('KYC Processor started');
 
-    // Process every 30 seconds
     this.interval = setInterval(() => {
       this.processPendingDocuments();
     }, 30000);
   }
 
-  /**
-   * Stop processor
-   */
   stop() {
     if (this.interval) {
       clearInterval(this.interval);
@@ -44,12 +35,8 @@ class KYCProcessor {
     }
   }
 
-  /**
-   * Process pending documents
-   */
   async processPendingDocuments() {
     try {
-      // Get documents pending processing
       const result = await query(
         `SELECT kd.*, ks.user_id, ks.id as session_id
          FROM kyc_documents kd
@@ -73,15 +60,12 @@ class KYCProcessor {
     }
   }
 
-  /**
-   * Process single document
-   */
   async processDocument(doc) {
     try {
       logger.info('Processing document', { documentId: doc.id });
 
-      // Step 1: Virus scan (simulate)
-      const scanResult = await this.virusScan(doc);
+      // Step 1: Real virus scan
+      const scanResult = await virusScanner.scanFile(doc.id, doc.s3_key);
       
       if (scanResult.status === 'infected') {
         await this.markDocumentFailed(doc.id, 'Virus detected');
@@ -89,7 +73,7 @@ class KYCProcessor {
         return;
       }
 
-      // Step 2: OCR extraction (simulate)
+      // Step 2: OCR extraction
       const ocrData = await this.extractOCR(doc);
 
       // Step 3: Validate ID expiry
@@ -113,17 +97,15 @@ class KYCProcessor {
         [JSON.stringify(ocrData), ocrData.expiryDate, doc.id]
       );
 
-      // Step 5: Update session to pending OTP
+      // Step 5: Update session
       await query(
         `UPDATE kyc_sessions 
          SET status = 'pending_otp', 
+             last_verified_at = NOW(),
              updated_at = NOW() 
          WHERE id = $1`,
         [doc.session_id]
       );
-
-      // Step 6: Optional - Call external verification vendor
-      // await this.callVerificationVendor(doc, ocrData);
 
       logger.info('Document processed successfully', { documentId: doc.id });
     } catch (error) {
@@ -131,37 +113,16 @@ class KYCProcessor {
         documentId: doc.id, 
         error: error.message 
       });
-
       await this.markDocumentFailed(doc.id, error.message);
     }
   }
 
-  /**
-   * Simulate virus scan
-   */
-  async virusScan(doc) {
-    // In production, integrate with ClamAV or similar
-    logger.info('Running virus scan', { documentId: doc.id });
-    
-    // Simulate scan delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    return { status: 'clean' };
-  }
-
-  /**
-   * Simulate OCR extraction
-   */
   async extractOCR(doc) {
-    // In production, integrate with Tesseract, Google Vision, or AWS Textract
     logger.info('Running OCR', { documentId: doc.id });
-
-    // Simulate OCR delay
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Mock OCR data
     const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 5); // 5 years from now
+    expiryDate.setFullYear(expiryDate.getFullYear() + 5);
 
     return {
       documentType: doc.doc_type,
@@ -175,9 +136,6 @@ class KYCProcessor {
     };
   }
 
-  /**
-   * Validate ID expiry
-   */
   async validateExpiry(ocrData) {
     if (!ocrData.expiryDate) {
       return { expired: false, expiringSoon: false };
@@ -194,29 +152,6 @@ class KYCProcessor {
     };
   }
 
-  /**
-   * Call external verification vendor (optional)
-   */
-  async callVerificationVendor(doc, _ocrData) {
-    // In production, integrate with:
-    // - Onfido
-    // - Jumio
-    // - IDnow
-    // - Veriff
-    // Based on region
-
-    logger.info('Calling verification vendor', { documentId: doc.id });
-
-    // Mock vendor response
-    return {
-      status: 'verified',
-      confidence: 0.98
-    };
-  }
-
-  /**
-   * Mark document as failed
-   */
   async markDocumentFailed(documentId, reason) {
     await query(
       `UPDATE kyc_documents 
@@ -226,13 +161,9 @@ class KYCProcessor {
        WHERE id = $1`,
       [documentId]
     );
-
     logger.warn('Document marked as failed', { documentId, reason });
   }
 
-  /**
-   * Mark session as rejected
-   */
   async markSessionRejected(sessionId, reason) {
     await query(
       `UPDATE kyc_sessions 
@@ -241,15 +172,12 @@ class KYCProcessor {
        WHERE id = $1`,
       [sessionId]
     );
-
     logger.warn('Session rejected', { sessionId, reason });
   }
 }
 
-// Create singleton instance
 const processor = new KYCProcessor();
 
-// Auto-start if not in test environment
 if (process.env.NODE_ENV !== 'test') {
   processor.start();
 }

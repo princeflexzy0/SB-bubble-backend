@@ -2,7 +2,7 @@ const kycService = require('../../services/kyc/kyc.service');
 const { createLogger } = require('../../config/monitoring');
 const logger = createLogger('kyc-controller');
 const { query } = require('../../config/database');
-const otpService = require('../../services/kyc/otp.service');
+const otpService = require('../../services/otp.service');
 const s3Service = require('../../services/storage/s3.service');
 
 const startKYC = async (req, res) => {
