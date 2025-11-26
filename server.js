@@ -51,13 +51,14 @@ process.on('SIGINT', () => {
 
 module.exports = server;
 
+}
 // Start background workers
-
-// Start background workers
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV === 'production' && process.env.START_WORKERS === 'true') {
   require('./workers/private/kyc-processor');
   require('./workers/private/gdpr-deletion.worker');
   require('./workers/private/purge-jobs.worker');
   
   logger.info('🤖 Background workers started');
+} else {
+  logger.info('⏸️  Background workers disabled (set START_WORKERS=true to enable)');
 }
