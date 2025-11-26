@@ -47,13 +47,13 @@ const createSetupIntentIdempotent = async (customerId, userId) => {
  * Create subscription with idempotency
  */
 const createSubscriptionIdempotent = async (customerId, _priceId, userId) => {
-  const idempotencyKey = `subscription_${userId}_${priceId}`;
+  const idempotencyKey = `subscription_${userId}_${_priceId}`;
   
   try {
     const subscription = await stripe.subscriptions.create(
       {
         customer: customerId,
-        items: [{ price: priceId }],
+        items: [{ price: _priceId }],
         expand: ['latest_invoice.payment_intent']
       },
       { idempotencyKey }
@@ -70,7 +70,7 @@ const createSubscriptionIdempotent = async (customerId, _priceId, userId) => {
 /**
  * Check for duplicate subscriptions
  */
-const checkDuplicateSubscription = async (userId, priceId) => {
+const checkDuplicateSubscription = async (userId, _priceId) => {
   const { query } = require('../../config/database');
   
   const result = await query(

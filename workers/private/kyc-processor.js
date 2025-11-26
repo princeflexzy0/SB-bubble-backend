@@ -1,6 +1,7 @@
 const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
 const virusScanner = require('../../services/virus-scanner.service');
+// Available for fraud checks
 const fraudDetection = require("../../services/kyc/fraud-detection.service");
 
 const logger = createLogger('kyc-processor');
