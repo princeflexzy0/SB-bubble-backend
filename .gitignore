@@ -57,3 +57,9 @@ yarn-error.log*
 
 # PM2
 .pm2/
+
+# Backup files
+*.backup
+*.bak
+*.old
+.env.backup
