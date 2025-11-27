@@ -24,9 +24,9 @@ const generateMagicLink = async (email) => {
 
     // Store token (10 min expiry)
     await query(
-      `INSERT INTO magic_links (user_id, token_hash, expires_at, created_at)
-       VALUES ($1, $2, NOW() + INTERVAL '10 minutes', NOW())`,
-      [user.id, tokenHash]
+      `INSERT INTO magic_links (user_id, email, token_hash, expires_at, created_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '10 minutes', NOW())`,
+      [user.id, email, tokenHash]
     );
 
     // Create magic link URL
