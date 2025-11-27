@@ -92,6 +92,16 @@ class KYCProcessor {
         delete ocrData.dateOfBirth;
       }
 
+      // Encrypt sensitive fields
+      if (ocrData.documentNumber) {
+        ocrData.documentNumber_encrypted = encrypt(ocrData.documentNumber);
+        delete ocrData.documentNumber;
+      }
+      if (ocrData.dateOfBirth) {
+        ocrData.dateOfBirth_encrypted = encrypt(ocrData.dateOfBirth);
+        delete ocrData.dateOfBirth;
+      }
+
       if (expiryCheck.expired) {
         await this.markDocumentFailed(doc.id, 'ID expired');
         await this.markSessionRejected(doc.session_id, 'Expired ID');

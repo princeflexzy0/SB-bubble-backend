@@ -282,6 +282,20 @@ const approveKYC = async (req, res) => {
       }
       doc.ocr_extracted = parsed;
     }
+
+    // Decrypt sensitive fields when reading
+    if (doc.ocr_extracted) {
+      const parsed = JSON.parse(doc.ocr_extracted);
+      if (parsed.documentNumber_encrypted) {
+        parsed.documentNumber = decrypt(parsed.documentNumber_encrypted);
+        delete parsed.documentNumber_encrypted;
+      }
+      if (parsed.dateOfBirth_encrypted) {
+        parsed.dateOfBirth = decrypt(parsed.dateOfBirth_encrypted);
+        delete parsed.dateOfBirth_encrypted;
+      }
+      doc.ocr_extracted = parsed;
+    }
       [sessionId]
     );
     
