@@ -86,7 +86,7 @@ const sendOTP = async (req, res) => {
       });
     }
 
-    const result = await otpService.createAndSendOTP(kycSessionId, userId, method, destination);
+    const result = await otpService.createAndSendOTP(userId, method, destination, "kyc_verification", kycSessionId);
 
     res.json({
       success: true,
