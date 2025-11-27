@@ -2,6 +2,7 @@ const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
 const virusScanner = require('../../services/virus-scanner.service');
 // Available for fraud checks
+const { encrypt } = require('../../utils/encryption');
 const fraudDetection = require("../../services/kyc/fraud-detection.service");
 
 const logger = createLogger('kyc-processor');
@@ -80,6 +81,16 @@ class KYCProcessor {
 
       // Step 3: Validate ID expiry
       const expiryCheck = await this.validateExpiry(ocrData);
+
+      // Encrypt sensitive fields
+      if (ocrData.documentNumber) {
+        ocrData.documentNumber_encrypted = encrypt(ocrData.documentNumber);
+        delete ocrData.documentNumber;
+      }
+      if (ocrData.dateOfBirth) {
+        ocrData.dateOfBirth_encrypted = encrypt(ocrData.dateOfBirth);
+        delete ocrData.dateOfBirth;
+      }
 
       if (expiryCheck.expired) {
         await this.markDocumentFailed(doc.id, 'ID expired');
