@@ -8,9 +8,9 @@ const {
   doubleCsrfProtection,
 } = doubleCsrf({
   getSecret: () => env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
-  cookieName: '__Host-bubble.x-csrf-token',
+  cookieName: 'bubble.csrf',
   cookieOptions: {
-    sameSite: 'strict',
+    sameSite: 'lax',
     path: '/',
     secure: env.NODE_ENV === 'production',
     httpOnly: true,
@@ -25,11 +25,19 @@ const csrfProtection = doubleCsrfProtection;
 
 // Export token generation endpoint
 const getCsrfToken = (req, res) => {
-  const token = generateToken(req, res);
-  res.json({ 
-    csrfToken: token,
-    message: 'CSRF token generated successfully'
-  });
+  try {
+    const token = generateToken(req, res);
+    res.json({ 
+      csrfToken: token,
+      message: 'CSRF token generated successfully'
+    });
+  } catch (error) {
+    console.error('CSRF token generation error:', error);
+    res.status(500).json({ 
+      error: 'Failed to generate CSRF token',
+      message: error.message 
+    });
+  }
 };
 
 module.exports = {
