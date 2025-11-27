@@ -1,36 +1,39 @@
-const csrf = require('csurf');
+const { doubleCsrf } = require('csrf-csrf');
 const cookieParser = require('cookie-parser');
+const env = require('../config/env');
 
-/**
- * CSRF Protection Middleware
- * Disabled in test/development for easier testing
- * Enabled in production for security
- */
+// Configure double CSRF protection
+const {
+  generateToken,
+  doubleCsrfProtection,
+} = doubleCsrf({
+  getSecret: () => env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
+  cookieName: '__Host-bubble.x-csrf-token',
+  cookieOptions: {
+    sameSite: 'strict',
+    path: '/',
+    secure: env.NODE_ENV === 'production',
+    httpOnly: true,
+  },
+  size: 64,
+  ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+  getTokenFromRequest: (req) => req.headers['x-csrf-token'] || req.body.csrfToken,
+});
 
-// Only enable CSRF in production
-const shouldEnableCSRF = process.env.NODE_ENV === 'production' && process.env.ENABLE_CSRF === 'true';
+// Export middleware
+const csrfProtection = doubleCsrfProtection;
 
-// Cookie parser for CSRF tokens
-const cookieParserMiddleware = cookieParser();
-
-// CSRF protection (disabled in test/dev)
-const csrfProtection = shouldEnableCSRF 
-  ? csrf({ cookie: true })
-  : (req, res, next) => {
-      // Mock CSRF for non-production
-      req.csrfToken = () => 'mock-csrf-token';
-      next();
-    };
-
-// CSRF token getter
+// Export token generation endpoint
 const getCsrfToken = (req, res) => {
-  res.json({
-    csrfToken: req.csrfToken()
+  const token = generateToken(req, res);
+  res.json({ 
+    csrfToken: token,
+    message: 'CSRF token generated successfully'
   });
 };
 
 module.exports = {
-  cookieParserMiddleware,
+  cookieParserMiddleware: cookieParser(),
   csrfProtection,
-  getCsrfToken
+  getCsrfToken,
 };
