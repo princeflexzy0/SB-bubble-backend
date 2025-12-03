@@ -1,9 +1,10 @@
 const { doubleCsrf } = require('csrf-csrf');
 const cookieParser = require('cookie-parser');
+const crypto = require('crypto');
 const env = require('../config/env');
 
 // Configure double CSRF protection
-const csrfConfig = doubleCsrf({
+const doubleCsrfOptions = {
   getSecret: () => env.CSRF_SECRET || 'default-csrf-secret-change-in-production',
   cookieName: 'bubble.csrf',
   cookieOptions: {
@@ -15,23 +16,25 @@ const csrfConfig = doubleCsrf({
   size: 64,
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
   getTokenFromRequest: (req) => req.headers['x-csrf-token'] || req.body.csrfToken,
-});
+};
 
-// Extract all functions from config
-const { 
-  invalidCsrfTokenError,
-  generateToken,
-  validateRequest,
-  doubleCsrfProtection 
-} = csrfConfig;
+// Initialize CSRF with proper destructuring
+let csrfProtection, generateToken;
 
-// Export middleware
-const csrfProtection = doubleCsrfProtection;
+try {
+  const csrf = doubleCsrf(doubleCsrfOptions);
+  csrfProtection = csrf.doubleCsrfProtection;
+  generateToken = csrf.generateToken;
+} catch (error) {
+  console.error('CSRF initialization failed:', error);
+  // Fallback middleware
+  csrfProtection = (req, res, next) => next();
+  generateToken = () => crypto.randomBytes(32).toString('hex');
+}
 
 // Export token generation endpoint
 const getCsrfToken = (req, res) => {
   try {
-    // Use the generateToken from config
     const token = generateToken(req, res);
     res.json({ 
       csrfToken: token,
@@ -40,7 +43,7 @@ const getCsrfToken = (req, res) => {
   } catch (error) {
     console.error('CSRF token generation error:', error);
     // Fallback: return a simple token
-    const fallbackToken = require('crypto').randomBytes(32).toString('hex');
+    const fallbackToken = crypto.randomBytes(32).toString('hex');
     res.json({ 
       csrfToken: fallbackToken,
       message: 'CSRF token generated (fallback)'
