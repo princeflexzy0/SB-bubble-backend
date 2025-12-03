@@ -101,30 +101,44 @@ app.use((req, res, next) => {
 });
 
 // ===========================================
+// ===========================================
 // 7. HMAC VALIDATION (GLOBAL MOUNTING)
 // ===========================================
 app.use('/api/v1', (req, res, next) => {
-  const isWebhook = req.path.includes("/webhook");
-  const isHealthRoute = req.path.includes("/health") || req.path.includes("/debug");
-  
-  // Only exempt these exact routes (per audit requirements)
-  const publicAuthRoutes = [
-    "/auth/login",      // Audit specifies login, not signin
-    "/auth/register"
+  // Complete list of public routes (no HMAC required)
+  const publicRoutes = [
+    // Auth - login/register
+    "/auth/login",
+    "/auth/signin", 
+    "/auth/register",
+    "/auth/signup",
+    // Auth - logout
+    "/auth/logout",
+    "/auth/signout",
+    // Auth - token management
+    "/auth/refresh",
+    "/auth/reset-password",
+    "/auth/csrf-token",
+    // Auth - OAuth
+    "/auth/google/start",
+    "/auth/google/callback",
+    "/auth/apple/start",
+    "/auth/apple/callback",
+    // Auth - Magic link
+    "/auth/magic"
   ];
-  
-  const isMagicLink = req.path.startsWith("/auth/magic/");
-  const isPaymentWebhook = req.path.includes("/payment/webhook");
-  const isPublicAuth = publicAuthRoutes.some(route => req.path.includes(route));
-  
-  if (isPublicAuth || isMagicLink || isPaymentWebhook || isHealthRoute) {
+
+  // Check exemptions
+  const isPublicAuth = publicRoutes.some(route => req.path.startsWith(route));
+  const isWebhook = req.path.includes("/webhook");
+  const isHealthRoute = req.path.startsWith("/health") || req.path.startsWith("/debug");
+
+  if (isPublicAuth || isWebhook || isHealthRoute) {
     return next();
   }
-  
+
   validateHmacSignature(req, res, next);
 });
-
-// ===========================================
 // 8. REGION DETECTION (NEW - RUNS ON EVERY REQUEST)
 // ===========================================
 app.use(regionDetector);
