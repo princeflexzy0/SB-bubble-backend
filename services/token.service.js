@@ -150,6 +150,7 @@ class TokenService {
       console.error('[token-service] error: Cleanup expired tokens failed', { error: error.message });
       throw new Error('Failed to cleanup expired tokens');
     }
+  }
 
   // Alias for validateRefreshToken (used by auth controller)
   async verifyRefreshToken(token) {
