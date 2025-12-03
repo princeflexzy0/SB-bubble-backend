@@ -170,6 +170,12 @@ class TokenService {
       throw new Error('Failed to cleanup expired tokens');
     }
   }
+
+  // Alias for validateRefreshToken (used by auth controller)
+  async verifyRefreshToken(token) {
+    return await this.validateRefreshToken(token);
+  }
+
 }
 
 module.exports = new TokenService();
