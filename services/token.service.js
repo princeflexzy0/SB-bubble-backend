@@ -150,27 +150,13 @@ class TokenService {
       console.error('[token-service] error: Cleanup expired tokens failed', { error: error.message });
       throw new Error('Failed to cleanup expired tokens');
     }
-  }
-
-// Last updated: Wed Dec  3 10:23:09 UTC 2025
 
   // Alias for validateRefreshToken (used by auth controller)
   async verifyRefreshToken(token) {
     return await this.validateRefreshToken(token);
   }
 
-  // Hash refresh token helper (expose for external use if needed)
-  hashRefreshToken(token) {
-    return crypto.createHash('sha256').update(token).digest('hex');
-  }
-
-
-  // Alias for validateRefreshToken (used by auth controller)
-  async verifyRefreshToken(token) {
-    return await this.validateRefreshToken(token);
-  }
-
-  // Hash refresh token helper (expose for external use if needed)
+  // Hash refresh token helper (expose for external use)
   hashRefreshToken(token) {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
