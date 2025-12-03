@@ -148,13 +148,6 @@ app.use(secureRequestLogger);
 
 // API routes
 
-// KYC, Auth & Payment Routes
-const authRoutes = require('./routes/auth/auth.routes');
-const accountRoutes = require('./routes/auth/account.routes');
-const magicRoutes = require('./routes/auth/magic.routes');
-const kycRoutes = require('./routes/kyc/kyc.routes');
-const adminKycRoutes = require('./routes/admin/kyc.routes');
-const paymentRoutes = require("./routes/payment/payment.routes");
 
 
 // API routes
