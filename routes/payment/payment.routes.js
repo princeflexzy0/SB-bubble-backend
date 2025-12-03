@@ -3,9 +3,28 @@ const router = express.Router();
 const paymentController = require('../../controllers/payment/payment.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
 const { requireValidKYC } = require('../../middleware/kyc.middleware');
-const { verifyStripeWebhook, checkDuplicateEvent } = require('../../middleware/stripe-webhook.middleware');
+const { 
+  validateStripeIP,
+  validateBodySize,
+  verifyStripeWebhook,
+  validateEventType,
+  validateEventAge,
+  checkDuplicateEvent
+} = require('../../middleware/stripe-webhook.middleware');
 
-// Grace tier (no KYC required)
+// ⚠️ WEBHOOK MUST BE FIRST (no auth/KYC - verified by Stripe signature + IP)
+router.post('/webhook', 
+  express.raw({ type: 'application/json' }),
+  validateBodySize,
+  validateStripeIP,
+  verifyStripeWebhook,
+  validateEventType,
+  validateEventAge,
+  checkDuplicateEvent,
+  paymentController.handleWebhook
+);
+
+// Grace tier (auth required, no KYC)
 router.post('/grace-activate', authenticate, paymentController.activateGraceTier);
 
 // All other payment routes require authentication + valid KYC
@@ -18,13 +37,5 @@ router.post('/add-payment-method', paymentController.addPaymentMethod);
 router.post('/create-subscription', paymentController.createSubscription);
 router.post('/cancel-subscription/:subscriptionId', paymentController.cancelSubscription);
 router.get('/subscription/:subscriptionId', paymentController.getSubscription);
-
-// Webhooks (no auth/KYC required - verified by signature)
-router.post('/webhook', 
-  express.raw({ type: 'application/json' }), 
-  verifyStripeWebhook,
-  checkDuplicateEvent,
-  paymentController.handleWebhook
-);
 
 module.exports = router;
