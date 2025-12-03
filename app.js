@@ -13,6 +13,9 @@ const env = require('./config/env');
 
 const app = express();
 
+// Trust Railway proxy (fixes rate-limit X-Forwarded-For warnings)
+app.set("trust proxy", 1);
+
 // ===========================================
 // 1. SENTRY INITIALIZATION (Production only)
 // ===========================================
