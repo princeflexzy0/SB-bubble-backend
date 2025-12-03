@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
-const env = require('../config/env');
-const { createLogger } = require('../utils/logger');
+const env = require('./config/env');
+const { createLogger } = require('./utils/logger');
 const logger = createLogger('email-service');
 
 class EmailService {
