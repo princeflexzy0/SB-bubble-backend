@@ -1,4 +1,4 @@
-const { verifyAccessToken } = require('../utils/jwt.util');
+const tokenService = require('../services/auth/token.service');
 const { query } = require('../config/database');
 const { createLogger } = require('../config/monitoring');
 
@@ -9,12 +9,16 @@ const logger = createLogger('auth-middleware');
  */
 async function setUserContext(userId, userRole = "user") {
   try {
-    await query("SELECT set_user_context($1, $2)", [userId, userRole]);
+    await query("SELECT set_config($1, $2, true)", ['app.current_user_id', userId.toString()]);
+    await query("SELECT set_config($1, $2, true)", ['app.current_user_role', userRole]);
   } catch (error) {
     logger.warn("Failed to set user context", { error: error.message });
   }
 }
 
+/**
+ * JWT Authentication middleware
+ */
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -27,7 +31,9 @@ const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7);
-    const decoded = verifyAccessToken(token);
+    
+    // Use token service to verify
+    const decoded = tokenService.verifyAccessToken(token);
 
     const result = await query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
 
@@ -54,6 +60,9 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+/**
+ * Require valid KYC verification
+ */
 const requireValidKYC = async (req, res, next) => {
   try {
     if (!req.user) {
@@ -102,11 +111,6 @@ const requireValidKYC = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  authenticate,
-  requireValidKYC,
-};
-
 /**
  * Admin authentication middleware
  */
@@ -134,4 +138,8 @@ const authenticateAdmin = async (req, res, next) => {
   }
 };
 
-module.exports.authenticateAdmin = authenticateAdmin;
+module.exports = {
+  authenticate,
+  requireValidKYC,
+  authenticateAdmin
+};
