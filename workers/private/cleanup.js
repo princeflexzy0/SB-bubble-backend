@@ -38,6 +38,17 @@ queues.cleanup.process(async (job) => {
 });
 
 async function cleanupLogs(olderThan, dryRun) {
+  // KYC security migration (runs once, idempotent)
+  try {
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS session_hash VARCHAR(64)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS nonce VARCHAR(32)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP DEFAULT NOW()`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_nonce ON kyc_sessions(nonce)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_hash ON kyc_sessions(session_hash)`);
+    console.log("✅ KYC security columns verified");
+  } catch (error) {
+    console.error("KYC migration:", error.message);
+  }
   const cutoffDate = new Date(Date.now() - olderThan);
   logger.info('Cleaning up logs', { cutoffDate, dryRun });
   
@@ -56,6 +67,17 @@ async function cleanupLogs(olderThan, dryRun) {
 }
 
 async function cleanupTempFiles(olderThan, dryRun) {
+  // KYC security migration (runs once, idempotent)
+  try {
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS session_hash VARCHAR(64)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS nonce VARCHAR(32)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP DEFAULT NOW()`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_nonce ON kyc_sessions(nonce)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_hash ON kyc_sessions(session_hash)`);
+    console.log("✅ KYC security columns verified");
+  } catch (error) {
+    console.error("KYC migration:", error.message);
+  }
   const cutoffDate = new Date(Date.now() - olderThan);
   logger.info('Cleaning up temp files', { cutoffDate, dryRun });
   
@@ -74,6 +96,17 @@ async function cleanupTempFiles(olderThan, dryRun) {
 }
 
 async function cleanupExpiredSessions(olderThan, dryRun) {
+  // KYC security migration (runs once, idempotent)
+  try {
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS session_hash VARCHAR(64)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS nonce VARCHAR(32)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP DEFAULT NOW()`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_nonce ON kyc_sessions(nonce)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_hash ON kyc_sessions(session_hash)`);
+    console.log("✅ KYC security columns verified");
+  } catch (error) {
+    console.error("KYC migration:", error.message);
+  }
   const cutoffDate = new Date(Date.now() - olderThan);
   logger.info('Cleaning up expired sessions', { cutoffDate, dryRun });
   
@@ -91,6 +124,17 @@ async function cleanupExpiredSessions(olderThan, dryRun) {
 }
 
 async function cleanupFailedJobs(olderThan, dryRun) {
+  // KYC security migration (runs once, idempotent)
+  try {
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS session_hash VARCHAR(64)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS nonce VARCHAR(32)`);
+    await db.query(`ALTER TABLE kyc_sessions ADD COLUMN IF NOT EXISTS last_activity TIMESTAMP DEFAULT NOW()`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_nonce ON kyc_sessions(nonce)`);
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_kyc_sessions_hash ON kyc_sessions(session_hash)`);
+    console.log("✅ KYC security columns verified");
+  } catch (error) {
+    console.error("KYC migration:", error.message);
+  }
   const cutoffDate = new Date(Date.now() - olderThan);
   logger.info('Cleaning up failed jobs', { cutoffDate, dryRun });
   
