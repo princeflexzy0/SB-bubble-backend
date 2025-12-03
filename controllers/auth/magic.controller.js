@@ -12,15 +12,13 @@ const sendMagicLink = async (req, res) => {
     if (!email) {
       return res.status(400).json({ success: false, error: 'Email required' });
     }
-    const { magicUrl } = await magicLinkService.generateMagicLink(email);
-    // TODO: Send email with magicUrl
-    // For now, return it (in production, never return the link!)
     
+    await magicLinkService.generateMagicLink(email, req.ip, req.headers['user-agent']);
+    
+    // NEVER return the magic URL - only send via email
     res.json({
       success: true,
-      message: 'Magic link sent to your email',
-      // PLACEHOLDER - Remove in production
-      data: { magicUrl: 'MAGIC_LINK_SENT_VIA_EMAIL' } 
+      message: 'Magic link sent to your email'
     });
   } catch (error) {
     logger.error('Send magic link failed', { error: error.message });
@@ -29,16 +27,17 @@ const sendMagicLink = async (req, res) => {
 };
 
 /**
- * Verify magic link
+ * Verify magic link - TOKEN ONLY, no email required
  */
 const verifyMagicLink = async (req, res) => {
   try {
-    const { token, email } = req.body;
-    if (!token || !email) {
-      return res.status(400).json({ success: false, error: 'Token and email required' });
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, error: 'Token required' });
     }
     
-    const user = await magicLinkService.verifyMagicLink(token, email);
+    // Verify with IP/UserAgent binding
+    const user = await magicLinkService.verifyMagicLink(token, req.ip, req.headers['user-agent']);
     
     // Use unified token service (stores hashed tokens)
     const tokens = await tokenService.generateTokenPair(user.userId);
