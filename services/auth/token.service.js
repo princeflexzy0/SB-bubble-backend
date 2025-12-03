@@ -6,7 +6,8 @@ const env = require('../../config/env');
 
 class TokenService {
   // Generate access token (short-lived)
-  generateAccessToken(userId) {
+  generateAccessToken(user) {
+    const userId = typeof user === 'object' ? user.id : user;
     return jwt.sign(
       { userId, type: 'access' },
       env.JWT_ACCESS_SECRET,
@@ -15,7 +16,8 @@ class TokenService {
   }
 
   // Generate refresh token (long-lived)
-  generateRefreshToken(userId) {
+  generateRefreshToken(user) {
+    const userId = typeof user === 'object' ? user.id : user;
     return jwt.sign(
       { userId, type: 'refresh', jti: uuidv4() },
       env.JWT_REFRESH_SECRET,
@@ -24,10 +26,12 @@ class TokenService {
   }
 
   // Generate both access and refresh tokens
-  async generateTokenPair(userId, ipAddress = null, userAgent = null) {
+  async generateTokenPair(user, ipAddress = null, userAgent = null) {
     try {
-      const accessToken = this.generateAccessToken(userId);
-      const refreshToken = this.generateRefreshToken(userId);
+      const accessToken = this.generateAccessToken(user);
+      const refreshToken = this.generateRefreshToken(user);
+      
+      const userId = typeof user === 'object' ? user.id : user;
       
       // Store refresh token in database
       await this.storeRefreshToken(userId, refreshToken, ipAddress, userAgent);
@@ -48,7 +52,7 @@ class TokenService {
       const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET);
       const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
       const expiresAt = new Date(decoded.exp * 1000);
-      const tokenFamily = uuidv4(); // Generate token family for rotation
+      const tokenFamily = uuidv4();
 
       const query = `
         INSERT INTO refresh_tokens (user_id, token_hash, token_family, expires_at, ip_address, user_agent, revoked)
