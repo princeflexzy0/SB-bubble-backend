@@ -18,9 +18,9 @@ const hashToken = (token) => {
 /**
  * Generate access token (short-lived)
  */
-const generateAccessToken = (userId, email) => {
+const generateAccessToken = (user) => {
   return jwt.sign(
-    { userId, email },
+    { userId: user.id, email: user.email, role: user.role || 'user' },
     JWT_SECRET,
     { expiresIn: '15m' }
   );
@@ -29,12 +29,21 @@ const generateAccessToken = (userId, email) => {
 /**
  * Generate refresh token (long-lived)
  */
-const generateRefreshToken = (userId, email) => {
+const generateRefreshToken = (user) => {
   return jwt.sign(
-    { userId, email },
+    { userId: user.id, email: user.email },
     JWT_REFRESH_SECRET,
     { expiresIn: '7d' }
   );
+};
+
+/**
+ * Generate both access and refresh tokens
+ */
+const generateTokenPair = (user) => {
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  return { accessToken, refreshToken };
 };
 
 /**
@@ -89,7 +98,7 @@ const verifyRefreshToken = async (refreshToken) => {
 };
 
 /**
- * Revoke refresh token (mark as revoked, don't delete)
+ * Revoke refresh token
  */
 const revokeRefreshToken = async (refreshToken, reason = 'user_logout') => {
   try {
@@ -102,18 +111,6 @@ const revokeRefreshToken = async (refreshToken, reason = 'user_logout') => {
       [tokenHash]
     );
 
-    // Audit log
-    await query(
-      `INSERT INTO kyc_audit_logs (user_id, action, details, timestamp)
-       VALUES (
-         (SELECT user_id FROM refresh_tokens WHERE token_hash = $1 LIMIT 1),
-         'token_revoked',
-         $2,
-         NOW()
-       )`,
-      [tokenHash, JSON.stringify({ reason })]
-    );
-
     logger.info('Refresh token revoked', { reason });
   } catch (error) {
     logger.error('Revoke refresh token failed', { error: error.message });
@@ -122,29 +119,32 @@ const revokeRefreshToken = async (refreshToken, reason = 'user_logout') => {
 };
 
 /**
- * Rotate refresh token (revoke old, issue new)
+ * Revoke all tokens for a user (logout all devices)
  */
-const rotateRefreshToken = async (oldRefreshToken, userId, email, ipAddress, userAgent) => {
+const revokeAllUserTokens = async (userId, reason = 'logout_all') => {
   try {
-    // Revoke old token
-    await revokeRefreshToken(oldRefreshToken, 'token_rotation');
+    await query(
+      `UPDATE refresh_tokens 
+       SET revoked = true, revoked_at = NOW() 
+       WHERE user_id = $1 AND revoked = false`,
+      [userId]
+    );
 
-    // Generate new tokens
-    const newAccessToken = generateAccessToken(userId, email);
-    const newRefreshToken = generateRefreshToken(userId, email);
-
-    // Store new refresh token
-    await storeRefreshToken(userId, newRefreshToken, ipAddress, userAgent);
-
-    logger.info('Token rotated', { userId });
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken
-    };
+    logger.info('All user tokens revoked', { userId, reason });
   } catch (error) {
-    logger.error('Token rotation failed', { error: error.message });
+    logger.error('Revoke all tokens failed', { error: error.message });
     throw error;
+  }
+};
+
+/**
+ * Verify access token
+ */
+const verifyAccessToken = (token) => {
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (error) {
+    throw new Error('Invalid access token');
   }
 };
 
@@ -152,8 +152,10 @@ module.exports = {
   hashToken,
   generateAccessToken,
   generateRefreshToken,
+  generateTokenPair,
   storeRefreshToken,
   verifyRefreshToken,
+  verifyAccessToken,
   revokeRefreshToken,
-  rotateRefreshToken
+  revokeAllUserTokens
 };
