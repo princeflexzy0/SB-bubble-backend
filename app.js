@@ -109,7 +109,7 @@ app.use((req, res, next) => {
 // ===========================================
 app.use('/api/v1', (req, res, next) => {
   // Complete list of public routes (no HMAC required)
-  const publicRoutes = [
+    const publicRoutes = [
     // Auth - login/register
     "/auth/login",
     "/auth/signin", 
@@ -128,9 +128,8 @@ app.use('/api/v1', (req, res, next) => {
     "/auth/apple/start",
     "/auth/apple/callback",
     // Auth - Magic link
-    "/auth/magic"
-    ,
-    // Admin - RLS migration
+    "/auth/magic",
+    // Admin - RLS migration (temporary)
     "/admin/run-rls-migration"
   ];
 
