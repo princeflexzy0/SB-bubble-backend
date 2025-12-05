@@ -44,12 +44,6 @@ const register = async (req, res) => {
     // Use unified token service
     const tokens = await tokenService.generateTokenPair(user.id, req.ip, req.get('user-agent'));
     
-    await tokenService.storeRefreshToken(
-      user.id,
-      tokens.refreshToken,
-      req.ip,
-      req.get('user-agent')
-    );
 
     logger.info('User registered', { userId: user.id, email });
 
@@ -115,12 +109,6 @@ const login = async (req, res) => {
 
     const tokens = await tokenService.generateTokenPair(user.id, req.ip, req.get('user-agent'));
     
-    await tokenService.storeRefreshToken(
-      user.id,
-      tokens.refreshToken,
-      req.ip,
-      req.get('user-agent')
-    );
 
     logger.info('User logged in', { userId: user.id, email });
 
@@ -262,18 +250,6 @@ const appleCallback = async (req, res) => {
       id: userRecord.id, 
       email: userRecord.email, 
       role: userRecord.role || 'user' 
-    });
-    await tokenService.storeRefreshToken(userRecord.id, tokens.refreshToken, req.ip, req.get('user-agent'));
-
-    res.json({
-      success: true,
-      data: {
-        user: {
-          id: userRecord.id,
-          email: userRecord.email
-        },
-        tokens
-      }
     });
   } catch (error) {
     logger.error('Apple callback failed', { error: error.message });
