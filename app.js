@@ -129,6 +129,9 @@ app.use('/api/v1', (req, res, next) => {
     "/auth/apple/callback",
     // Auth - Magic link
     "/auth/magic"
+    ,
+    // Admin - RLS migration
+    "/admin/run-rls-migration"
   ];
 
   // Check exemptions
