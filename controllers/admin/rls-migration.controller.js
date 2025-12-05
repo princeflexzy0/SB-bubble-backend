@@ -1,15 +1,7 @@
 const { pool } = require('../../config/database');
-const fs = require('fs');
-const path = require('path');
 
 exports.runRlsMigration = async (req, res) => {
   try {
-    // Security check
-    const adminKey = req.headers['x-admin-key'];
-    if (!adminKey || adminKey !== process.env.ADMIN_SECRET) {
-      return res.status(403).json({ error: 'Unauthorized' });
-    }
-
     console.log('Running RLS migration...');
 
     // Run the migration directly
