@@ -2,7 +2,6 @@
 const cron = require('node-cron');
 const { createLogger } = require('../config/monitoring');
 const queues = require('../workers/queue/queueManager');
-
 const logger = createLogger('cron-retry-stuck');
 
 // Run every hour
@@ -38,50 +37,60 @@ function startRetryStuckWorkflows() {
 
 async function retryStuckJobs(queue, queueName) {
   try {
-    // Get failed jobs
-    const failedJobs = await queue.getFailed(0, 100);
+    let retriedCount = 0;
     
-    // Get stuck (active but not progressing) jobs
-    const activeJobs = await queue.getActive(0, 100);
+    // BullMQ API: getJobs with state filter
+    const failedJobs = await queue.getJobs(['failed'], 0, 99);
+    
+    // Retry failed jobs
+    for (const job of failedJobs) {
+      try {
+        await job.retry();
+        retriedCount++;
+        logger.info('Retried failed job', { queueName, jobId: job.id });
+      } catch (retryError) {
+        logger.error('Failed to retry job', { 
+          queueName, 
+          jobId: job.id, 
+          error: retryError.message 
+        });
+      }
+    }
+    
+    // Check for stuck active jobs (BullMQ API)
+    const activeJobs = await queue.getJobs(['active'], 0, 99);
     const stuckJobs = activeJobs.filter(job => {
       const lastUpdate = job.timestamp || job.processedOn;
       const timeSinceUpdate = Date.now() - lastUpdate;
       return timeSinceUpdate > 30 * 60 * 1000; // 30 minutes
     });
     
-    let retriedCount = 0;
-    
-    // Retry failed jobs (max 3 attempts)
-    for (const job of failedJobs) {
-      const attemptsMade = job.attemptsMade || 0;
-      if (attemptsMade < 3) {
+    // Move stuck jobs to failed and retry
+    for (const job of stuckJobs) {
+      try {
+        await job.moveToFailed({ message: 'Job stuck for >30min' }, false);
         await job.retry();
         retriedCount++;
-        logger.info('Retrying failed job', { 
+        logger.info('Retried stuck job', { queueName, jobId: job.id });
+      } catch (retryError) {
+        logger.error('Failed to retry stuck job', { 
           queueName, 
           jobId: job.id, 
-          attempt: attemptsMade + 1 
+          error: retryError.message 
         });
       }
     }
     
-    // Restart stuck jobs
-    for (const job of stuckJobs) {
-      await job.retry();
-      retriedCount++;
-      logger.info('Restarting stuck job', { queueName, jobId: job.id });
-    }
-    
-    return {
-      queueName,
+    return { 
+      queueName, 
+      retriedCount,
       failedCount: failedJobs.length,
-      stuckCount: stuckJobs.length,
-      retriedCount
+      stuckCount: stuckJobs.length
     };
     
   } catch (error) {
     logger.error(`Error processing queue ${queueName}`, { error: error.message });
-    return { queueName, retriedCount: 0, error: error.message };
+    return { queueName, retriedCount: 0, failedCount: 0, stuckCount: 0 };
   }
 }
 
