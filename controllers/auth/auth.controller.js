@@ -32,7 +32,7 @@ const register = async (req, res) => {
     const user = result.rows[0];
     
     // ✅ SET RLS CONTEXT
-    await client.query('SELECT set_user_context($1)', [user.id]);
+    // await client.query('SELECT set_user_context($1)', [user.id]);
     
     // Log login event
     await client.query(
@@ -104,7 +104,7 @@ const login = async (req, res) => {
     }
 
     // ✅ SET RLS CONTEXT
-    await client.query('SELECT set_user_context($1)', [user.id]);
+    // await client.query('SELECT set_user_context($1)', [user.id]);
 
     // Log successful login
     await client.query(
