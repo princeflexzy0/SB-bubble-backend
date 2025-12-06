@@ -1,3 +1,4 @@
+const tokenService = require('./token.service');
 const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
 const appleJwks = require('./apple-jwks.service');
