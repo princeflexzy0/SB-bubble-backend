@@ -44,3 +44,52 @@ const handleAppleCallback = async (idToken, userInfo) => {
 module.exports = {
   handleAppleCallback
 };
+
+/**
+ * Refresh Apple token (if needed)
+ */
+async function refreshAppleToken(userId) {
+  try {
+    const result = await query(
+      'SELECT apple_refresh_token FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (!result.rows[0]?.apple_refresh_token) {
+      throw new Error('No Apple refresh token found');
+    }
+    
+    // Apple doesn't provide refresh tokens in Sign in with Apple
+    // User must re-authenticate
+    logger.warn('Apple token refresh requested but not supported', { userId });
+    return null;
+    
+  } catch (error) {
+    logger.error('Apple token refresh failed', { error: error.message, userId });
+    throw error;
+  }
+}
+
+/**
+ * Revoke Apple authorization
+ */
+async function revokeAppleAuth(userId) {
+  try {
+    await query(
+      `UPDATE users 
+       SET apple_user_id = NULL, apple_refresh_token = NULL 
+       WHERE id = $1`,
+      [userId]
+    );
+    
+    logger.info('Apple authorization revoked', { userId });
+    return true;
+    
+  } catch (error) {
+    logger.error('Apple auth revocation failed', { error: error.message, userId });
+    throw error;
+  }
+}
+
+module.exports.refreshAppleToken = refreshAppleToken;
+module.exports.revokeAppleAuth = revokeAppleAuth;
