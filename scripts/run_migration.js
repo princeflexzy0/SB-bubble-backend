@@ -66,7 +66,7 @@ async function runMigration() {
     `);
     
     // console.log(`\n✅ Verified ${result.rows.length}/3 functions:`);
-    result.rows.forEach(row => { /* console.log */(`   ✓ ${row.routine_name}`));
+    // Rows logged
     
   } catch (error) {
     // console.error('\n❌ Migration failed:');
