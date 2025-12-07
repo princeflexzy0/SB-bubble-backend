@@ -22,7 +22,7 @@ const sensitiveOpLimiter = rateLimit({
  * @desc    Get user profile
  * @access  Private
  */
-router.get(authenticate, ('/profile', userController.getProfile);
+router.get('/profile', authenticate, userController.getProfile);
 
 /**
  * @route   PUT /api/v1/user/profile
@@ -40,7 +40,7 @@ router.put('/profile',
  * @desc    Get user statistics
  * @access  Private
  */
-router.get(authenticate, ('/stats', userController.getStats);
+router.get('/stats', userController.getStats);
 
 /**
  * @route   DELETE /api/v1/user/deactivate
