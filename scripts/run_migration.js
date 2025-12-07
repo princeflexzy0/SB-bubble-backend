@@ -66,13 +66,13 @@ async function runMigration() {
     `);
     
     // console.log(`\n✅ Verified ${result.rows.length}/3 functions:`);
-    result.rows.forEach(row => // console.log(`   ✓ ${row.routine_name}`));
+    result.rows.forEach(row => { /* console.log */(`   ✓ ${row.routine_name}`));
     
   } catch (error) {
     // console.error('\n❌ Migration failed:');
     // console.error('   Error:', error.message);
-    if (error.code) // console.error('   Code:', error.code);
-    if (error.detail) // console.error('   Detail:', error.detail);
+    if (error.code) { /* console.error */ }('   Code:', error.code);
+    if (error.detail) { /* console.error */ }('   Detail:', error.detail);
     if (error.hint) // console.error('   Hint:', error.hint);
     process.exit(1);
   } finally {
