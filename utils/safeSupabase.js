@@ -40,7 +40,7 @@ class SafeSupabase {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Safe select error:', error);
+      // console.error('Safe select error:', error);
       return { data: null, error };
     }
   }
@@ -66,7 +66,7 @@ class SafeSupabase {
       if (error) throw error;
       return { data: insertedData, error: null };
     } catch (error) {
-      console.error('Safe insert error:', error);
+      // console.error('Safe insert error:', error);
       return { data: null, error };
     }
   }
@@ -92,7 +92,7 @@ class SafeSupabase {
       if (error) throw error;
       return { data: updatedData, error: null };
     } catch (error) {
-      console.error('Safe update error:', error);
+      // console.error('Safe update error:', error);
       return { data: null, error };
     }
   }
@@ -119,7 +119,7 @@ class SafeSupabase {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Safe RPC error:', error);
+      // console.error('Safe RPC error:', error);
       return { data: null, error };
     }
   }
@@ -162,9 +162,9 @@ class SafeSupabase {
    */
   // eslint-disable-next-line no-unused-vars
   async rawQuery(sql, params = []) {
-    console.error('⚠️  WARNING: Raw SQL query attempted!');
-    console.error('⚠️  SQL:', sql);
-    console.error('⚠️  Use safe methods instead!');
+    // console.error('⚠️  WARNING: Raw SQL query attempted!');
+    // console.error('⚠️  SQL:', sql);
+    // console.error('⚠️  Use safe methods instead!');
     
     throw new Error('Raw SQL queries are disabled. Use safe methods instead.');
   }

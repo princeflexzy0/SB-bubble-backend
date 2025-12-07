@@ -23,7 +23,7 @@ const encrypt = (text) => {
     // Return: iv:authTag:encrypted
     return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
   } catch (error) {
-    console.error('Encryption failed:', error.message);
+    // console.error('Encryption failed:', error.message);
     throw error;
   }
 };
@@ -54,7 +54,7 @@ const decrypt = (encryptedData) => {
     
     return decrypted;
   } catch (error) {
-    console.error('Decryption failed:', error.message);
+    // console.error('Decryption failed:', error.message);
     throw error;
   }
 };

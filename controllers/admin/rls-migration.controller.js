@@ -10,12 +10,12 @@ exports.runRlsMigration = async (req, res) => {
     const action = req.body?.action || 'rls';
 
     if (action === 'clear_tokens') {
-      console.log('Clearing all refresh tokens...');
+      // console.log('Clearing all refresh tokens...');
       await pool.query('DELETE FROM refresh_tokens');
       return res.json({ success: true, message: 'All refresh tokens cleared' });
     }
 
-    console.log('Running RLS migration...');
+    // console.log('Running RLS migration...');
 
     // Drop with exact signatures
     await pool.query('DROP FUNCTION IF EXISTS set_user_context(uuid, boolean);');
@@ -45,7 +45,7 @@ exports.runRlsMigration = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Migration error:', error);
+    // console.error('Migration error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 };

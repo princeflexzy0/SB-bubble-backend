@@ -44,7 +44,7 @@ const ensureIdempotency = (ttlSeconds = 86400) => {
         
         if (cached) {
           const cachedResponse = JSON.parse(cached);
-          console.log(`✅ Idempotency hit: ${idempotencyKey} (returning cached response)`);
+          // console.log(`✅ Idempotency hit: ${idempotencyKey} (returning cached response)`);
           return res.status(cachedResponse.statusCode).json(cachedResponse.body);
         }
 
@@ -59,7 +59,7 @@ const ensureIdempotency = (ttlSeconds = 86400) => {
           
           // Cache in Redis
           redis.setex(key, ttlSeconds, JSON.stringify(response)).catch(err => {
-            console.error('Failed to cache idempotent response:', err);
+            // console.error('Failed to cache idempotent response:', err);
           });
           
           return originalJson(body);
@@ -72,7 +72,7 @@ const ensureIdempotency = (ttlSeconds = 86400) => {
         
         if (memoryCache.has(key)) {
           const cachedResponse = memoryCache.get(key);
-          console.log(`✅ Idempotency hit (memory): ${idempotencyKey}`);
+          // console.log(`✅ Idempotency hit (memory): ${idempotencyKey}`);
           return res.status(cachedResponse.statusCode).json(cachedResponse.body);
         }
 
@@ -95,7 +95,7 @@ const ensureIdempotency = (ttlSeconds = 86400) => {
         next();
       }
     } catch (error) {
-      console.error('Idempotency middleware error:', error);
+      // console.error('Idempotency middleware error:', error);
       next();
     }
   };
@@ -119,7 +119,7 @@ const ensureWebhookIdempotency = async (webhookId, ttlSeconds = 86400) => {
       return false; // Already processed
     }
     
-    console.log(`✅ New webhook: ${webhookId}`);
+    // console.log(`✅ New webhook: ${webhookId}`);
     return true; // New webhook
   } else {
     console.warn('⚠️  Redis unavailable - cannot check webhook idempotency!');

@@ -17,13 +17,13 @@ async function checkTables() {
       ORDER BY table_name;
     `);
     
-    console.log('�� Existing tables:');
-    result.rows.forEach(row => console.log('  -', row.table_name));
+    // console.log('�� Existing tables:');
+    result.rows.forEach(row => // console.log('  -', row.table_name));
     
     client.release();
     process.exit(0);
   } catch (error) {
-    console.error('Error:', error.message);
+    // console.error('Error:', error.message);
     process.exit(1);
   }
 }

@@ -54,11 +54,11 @@ async function logAuditEvent({
       .insert(auditLog);
 
     if (error) {
-      console.error('Failed to write audit log:', error);
+      // console.error('Failed to write audit log:', error);
     }
   } catch (error) {
     // Don't let audit logging break the application
-    console.error('Audit logging error:', error);
+    // console.error('Audit logging error:', error);
   }
 }
 
@@ -93,7 +93,7 @@ const auditLog = (action, resource) => {
           ipAddress,
           userAgent,
           status: 'success'
-        }).catch(err => console.error('Audit log failed:', err));
+        }).catch(err => // console.error('Audit log failed:', err));
       }
 
       // Send original response

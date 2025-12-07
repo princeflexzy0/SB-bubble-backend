@@ -24,7 +24,7 @@ function encryptPII(plaintext) {
     // Return: iv:authTag:encrypted
     return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
   } catch (error) {
-    console.error('PII encryption failed:', error.message);
+    // console.error('PII encryption failed:', error.message);
     throw new Error('Failed to encrypt sensitive data');
   }
 }
@@ -54,7 +54,7 @@ function decryptPII(ciphertext) {
     
     return decrypted;
   } catch (error) {
-    console.error('PII decryption failed:', error.message);
+    // console.error('PII decryption failed:', error.message);
     throw new Error('Failed to decrypt sensitive data');
   }
 }

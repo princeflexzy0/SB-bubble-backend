@@ -10,7 +10,7 @@ try {
     prefix: 'rl:',
   });
   if (process.env.NODE_ENV === 'production') {
-    console.log('✅ Using Redis for rate limiting');
+    // console.log('✅ Using Redis for rate limiting');
   }
 } catch (error) {
   if (process.env.NODE_ENV === 'production') {

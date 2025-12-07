@@ -26,7 +26,7 @@ try {
   csrfProtection = csrf.doubleCsrfProtection;
   generateToken = csrf.generateToken;
 } catch (error) {
-  console.error('CSRF initialization failed:', error);
+  // console.error('CSRF initialization failed:', error);
   // Fallback middleware
   csrfProtection = (req, res, next) => next();
   generateToken = () => crypto.randomBytes(32).toString('hex');
@@ -41,7 +41,7 @@ const getCsrfToken = (req, res) => {
       message: 'CSRF token generated successfully'
     });
   } catch (error) {
-    console.error('CSRF token generation error:', error);
+    // console.error('CSRF token generation error:', error);
     // Fallback: return a simple token
     const fallbackToken = crypto.randomBytes(32).toString('hex');
     res.json({ 

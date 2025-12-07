@@ -10,7 +10,7 @@ let isClamAvailable = false;
 async function initClamAV() {
   // Check if antivirus scanning is enabled
   if (!env.ENABLE_ANTIVIRUS_SCAN || env.ENABLE_ANTIVIRUS_SCAN === 'false') {
-    console.log('ℹ️  Antivirus scanning DISABLED by configuration');
+    // console.log('ℹ️  Antivirus scanning DISABLED by configuration');
     isClamAvailable = false;
     return null;
   }
@@ -32,7 +32,7 @@ async function initClamAV() {
     });
 
     const version = await clamScanner.getVersion();
-    console.log(`✅ ClamAV initialized: ${version}`);
+    // console.log(`✅ ClamAV initialized: ${version}`);
     isClamAvailable = true;
     
     return clamScanner;
@@ -65,7 +65,7 @@ async function scanFile(filePath) {
   }
 
   if (!clamScanner) {
-    console.error(`❌ ANTIVIRUS UNAVAILABLE: Cannot scan ${filePath}`);
+    // console.error(`❌ ANTIVIRUS UNAVAILABLE: Cannot scan ${filePath}`);
     return {
       isInfected: false,
       viruses: [],
@@ -78,13 +78,13 @@ async function scanFile(filePath) {
     const { isInfected, viruses } = await clamScanner.isInfected(filePath);
 
     if (isInfected) {
-      console.error(`🦠 VIRUS DETECTED in ${filePath}:`, viruses);
+      // console.error(`🦠 VIRUS DETECTED in ${filePath}:`, viruses);
       
       try {
         await fs.unlink(filePath);
-        console.log(`✅ Infected file deleted: ${filePath}`);
+        // console.log(`✅ Infected file deleted: ${filePath}`);
       } catch (err) {
-        console.error(`Failed to delete infected file: ${err.message}`);
+        // console.error(`Failed to delete infected file: ${err.message}`);
       }
     }
 
@@ -94,7 +94,7 @@ async function scanFile(filePath) {
       skipped: false
     };
   } catch (error) {
-    console.error('Virus scan error:', error);
+    // console.error('Virus scan error:', error);
     return {
       isInfected: false,
       viruses: [],
@@ -131,7 +131,7 @@ const scanUploadedFile = async (req, res, next) => {
     }
 
     if (scanResult.error && !scanResult.skipped) {
-      console.error('Scan error - rejecting upload as precaution');
+      // console.error('Scan error - rejecting upload as precaution');
       return res.status(500).json({
         status: 'error',
         code: 500,
@@ -141,7 +141,7 @@ const scanUploadedFile = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error('Antivirus middleware error:', error);
+    // console.error('Antivirus middleware error:', error);
     return res.status(500).json({
       status: 'error',
       code: 500,

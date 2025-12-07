@@ -6,7 +6,7 @@ let isRedisAvailable = false;
 
 function initRedis() {
   if (env.NODE_ENV === 'test' && !env.REDIS_URL) {
-    console.log('ℹ️  Test mode: Redis disabled');
+    // console.log('ℹ️  Test mode: Redis disabled');
     return null;
   }
 
@@ -20,7 +20,7 @@ function initRedis() {
       maxRetriesPerRequest: 3,
       retryStrategy(times) {
         if (times > 3) {
-          console.error('❌ Redis connection failed after 3 retries');
+          // console.error('❌ Redis connection failed after 3 retries');
           return null;
         }
         return Math.min(times * 200, 1000);
@@ -29,17 +29,17 @@ function initRedis() {
 
     redisClient.on('connect', () => {
       isRedisAvailable = true;
-      console.log('✅ Redis connected');
+      // console.log('✅ Redis connected');
     });
 
     redisClient.on('error', (err) => {
       isRedisAvailable = false;
-      console.error('Redis error:', err.message);
+      // console.error('Redis error:', err.message);
     });
 
     return redisClient;
   } catch (error) {
-    console.error('Failed to initialize Redis:', error.message);
+    // console.error('Failed to initialize Redis:', error.message);
     return null;
   }
 }
@@ -66,7 +66,7 @@ function getRedisClient() {
 async function closeRedis() {
   if (redisClient) {
     await redisClient.quit();
-    console.log('Redis connection closed');
+    // console.log('Redis connection closed');
   }
 }
 

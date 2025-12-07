@@ -9,9 +9,9 @@ const pool = new Pool({
 
 async function runMigrations() {
   try {
-    console.log('Connecting to database...');
+    // console.log('Connecting to database...');
     const client = await pool.connect();
-    console.log('✅ Connected');
+    // console.log('✅ Connected');
     
     const migrations = [
       '001_create_users_table.sql',
@@ -22,13 +22,13 @@ async function runMigrations() {
     
     for (const migration of migrations) {
       try {
-        console.log(`Running migration: ${migration}...`);
+        // console.log(`Running migration: ${migration}...`);
         const sql = fs.readFileSync(`migrations/${migration}`, 'utf8');
         await client.query(sql);
-        console.log(`✅ ${migration} completed`);
+        // console.log(`✅ ${migration} completed`);
       } catch (error) {
         if (error.message.includes('already exists') || error.message.includes('duplicate')) {
-          console.log(`⚠️  ${migration} - objects already exist, skipping`);
+          // console.log(`⚠️  ${migration} - objects already exist, skipping`);
         } else {
           throw error;
         }
@@ -36,11 +36,11 @@ async function runMigrations() {
     }
     
     client.release();
-    console.log('🎉 All migrations completed successfully!');
+    // console.log('🎉 All migrations completed successfully!');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Migration failed:');
-    console.error('Error message:', error.message);
+    // console.error('❌ Migration failed:');
+    // console.error('Error message:', error.message);
     process.exit(1);
   }
 }

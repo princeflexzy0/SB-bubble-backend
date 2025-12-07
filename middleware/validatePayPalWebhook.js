@@ -17,7 +17,7 @@ async function validatePayPalWebhook(req, res, next) {
     
     // Check all required headers present
     if (!transmissionId || !transmissionTime || !transmissionSig || !certUrl || !authAlgo) {
-      console.error('Missing PayPal webhook headers');
+      // console.error('Missing PayPal webhook headers');
       return res.status(400).json({
         status: 'error',
         message: 'Invalid PayPal webhook - missing headers'
@@ -27,7 +27,7 @@ async function validatePayPalWebhook(req, res, next) {
     // Get webhook ID from environment
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
     if (!webhookId) {
-      console.error('PAYPAL_WEBHOOK_ID not configured');
+      // console.error('PAYPAL_WEBHOOK_ID not configured');
       return res.status(500).json({
         status: 'error',
         message: 'Webhook configuration error'
@@ -48,7 +48,7 @@ async function validatePayPalWebhook(req, res, next) {
       const certResponse = await axios.get(certUrl, { timeout: 5000 });
       cert = certResponse.data;
     } catch (error) {
-      console.error('Failed to download PayPal certificate:', error.message);
+      // console.error('Failed to download PayPal certificate:', error.message);
       return res.status(400).json({
         status: 'error',
         message: 'Failed to verify webhook certificate'
@@ -62,7 +62,7 @@ async function validatePayPalWebhook(req, res, next) {
     const isValid = verify.verify(cert, transmissionSig, 'base64');
 
     if (!isValid) {
-      console.error('PayPal webhook signature verification failed');
+      // console.error('PayPal webhook signature verification failed');
       return res.status(403).json({
         status: 'error',
         message: 'Invalid webhook signature'
@@ -70,10 +70,10 @@ async function validatePayPalWebhook(req, res, next) {
     }
 
     // Signature valid - proceed
-    console.log('✅ PayPal webhook signature verified');
+    // console.log('✅ PayPal webhook signature verified');
     next();
   } catch (error) {
-    console.error('PayPal webhook verification error:', error);
+    // console.error('PayPal webhook verification error:', error);
     return res.status(500).json({
       status: 'error',
       message: 'Webhook verification error'

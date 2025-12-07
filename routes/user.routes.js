@@ -1,3 +1,4 @@
+const { authenticate } = require('../middleware/auth.middleware');
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
@@ -21,7 +22,7 @@ const sensitiveOpLimiter = rateLimit({
  * @desc    Get user profile
  * @access  Private
  */
-router.get('/profile', userController.getProfile);
+router.get(authenticate, ('/profile', userController.getProfile);
 
 /**
  * @route   PUT /api/v1/user/profile
@@ -39,7 +40,7 @@ router.put('/profile',
  * @desc    Get user statistics
  * @access  Private
  */
-router.get('/stats', userController.getStats);
+router.get(authenticate, ('/stats', userController.getStats);
 
 /**
  * @route   DELETE /api/v1/user/deactivate

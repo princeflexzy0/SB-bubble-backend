@@ -5,7 +5,7 @@ function initSentry(app) {
   const SENTRY_DSN = process.env.SENTRY_DSN;
   
   if (!SENTRY_DSN) {
-    console.log('⚠️  SENTRY_DSN not configured - error tracking disabled');
+    // console.log('⚠️  SENTRY_DSN not configured - error tracking disabled');
     return;
   }
 
@@ -32,7 +32,7 @@ function initSentry(app) {
     },
   });
 
-  console.log('✅ Sentry error tracking enabled');
+  // console.log('✅ Sentry error tracking enabled');
 }
 
 function getSentryMiddleware() {

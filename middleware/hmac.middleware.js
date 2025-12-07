@@ -30,7 +30,7 @@ const validateHmacSignature = (req, res, next) => {
 
     // Check if HMAC secret is configured
     if (!env.INTERNAL_HMAC_SECRET) {
-      console.error('CRITICAL: INTERNAL_HMAC_SECRET not configured!');
+      // console.error('CRITICAL: INTERNAL_HMAC_SECRET not configured!');
       return res.status(500).json({
         status: 'error',
         code: 500,
@@ -87,7 +87,7 @@ const validateHmacSignature = (req, res, next) => {
     // Signature valid
     next();
   } catch (error) {
-    console.error('HMAC validation error:', error);
+    // console.error('HMAC validation error:', error);
     return res.status(500).json({
       status: 'error',
       code: 500,

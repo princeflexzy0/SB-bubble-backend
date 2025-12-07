@@ -36,7 +36,7 @@ function initSentry(app) {
     },
   });
 
-  console.log('✅ Sentry initialized');
+  // console.log('✅ Sentry initialized');
 }
 
 /**

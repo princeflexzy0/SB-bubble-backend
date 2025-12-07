@@ -12,9 +12,9 @@ async function applyRLS() {
   try {
     const sql = fs.readFileSync('database/rls_policies.sql', 'utf8');
     await client.query(sql);
-    console.log('✅ RLS policies applied successfully');
+    // console.log('✅ RLS policies applied successfully');
   } catch (error) {
-    console.error('⚠️  RLS application failed:', error.message);
+    // console.error('⚠️  RLS application failed:', error.message);
   } finally {
     client.release();
     await pool.end();

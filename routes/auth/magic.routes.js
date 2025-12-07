@@ -1,3 +1,4 @@
+// Public routes - no auth required for magic links
 const express = require('express');
 const router = express.Router();
 const magicController = require('../../controllers/auth/magic.controller');
