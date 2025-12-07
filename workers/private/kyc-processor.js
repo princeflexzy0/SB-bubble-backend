@@ -3,7 +3,7 @@ const { createLogger } = require('../../config/monitoring');
 const virusScanner = require('../../services/storage/virus-scanner.service');
 // Available for fraud checks
 const { encrypt } = require('../../utils/encryption');
-const fraudDetection = require("../../services/kyc/fraud-detection.service");
+const fraudDetection = require("../../services/fraud-detection.service");
 
 const logger = createLogger('kyc-processor');
 
