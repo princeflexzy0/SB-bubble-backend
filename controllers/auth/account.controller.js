@@ -1,3 +1,4 @@
+const emailService = require('../../services/email.service');
 const { query } = require('../../config/database');
 const { createLogger } = require('../../config/monitoring');
 
