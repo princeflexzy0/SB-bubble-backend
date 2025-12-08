@@ -127,8 +127,6 @@ const verifyOTP = async (req, res) => {
   }
 };
 
-module.exports.sendOTP = sendOTP;
-module.exports.verifyOTP = verifyOTP;
 
 /**
  * Get presigned upload URL
@@ -238,14 +236,7 @@ const confirmUpload = async (req, res) => {
   }
 };
 
-module.exports.getUploadUrl = getUploadUrl;
-module.exports.confirmUpload = confirmUpload;
 
-module.exports.startKYC = startKYC;
-module.exports.submitConsent = submitConsent;
-module.exports.getOptions = getOptions;
-module.exports.getStatus = getStatus;
-module.exports.changeIDType = changeIDType;
 
 
 /**
@@ -305,7 +296,6 @@ const approveKYC = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-module.exports.approveKYC = approveKYC;
 
 // Upload document (wrapper for backward compatibility)
 const uploadDocument = async (req, res) => {
@@ -344,4 +334,15 @@ const uploadDocument = async (req, res) => {
   }
 };
 
-module.exports.uploadDocument = uploadDocument;
+
+// Export all controller methods
+module.exports = {
+  startKYC,
+  uploadDocument,
+  getStatus,
+  approveKYC,
+  getUploadURL,
+  confirmUpload,
+  verifyOTP,
+  rejectKYC
+};
