@@ -14,6 +14,7 @@ module.exports = cleanEnv(process.env, {
   JWT_SECRET: str({ default: 'fallback-secret' }),
   JWT_ACCESS_SECRET: str(),
   JWT_REFRESH_SECRET: str(),
+  ENCRYPTION_KEY: str({ desc: 'Encryption key for PII data', default: 'default-encryption-key-change-in-production' }),
   JWT_ACCESS_EXPIRY: str({ default: '15m' }),
   JWT_REFRESH_EXPIRY: str({ default: '7d' }),
 
