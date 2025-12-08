@@ -306,3 +306,42 @@ const approveKYC = async (req, res) => {
   }
 };
 module.exports.approveKYC = approveKYC;
+
+// Upload document (wrapper for backward compatibility)
+const uploadDocument = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.id;
+    
+    // This is typically a two-step process:
+    // 1. Get presigned URL (getUploadURL)
+    // 2. Confirm upload (confirmUpload)
+    
+    // For direct upload, handle file buffer
+    if (req.file) {
+      const file = req.file;
+      
+      // Upload to S3 and process
+      const kycWorkflow = require('../../services/kyc/kyc-workflow.service');
+      await kycWorkflow.processDocument(sessionId, userId, file.buffer, file.originalname, 'passport');
+      
+      res.json({
+        success: true,
+        message: 'Document uploaded and processing'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'No file provided'
+      });
+    }
+  } catch (error) {
+    logger.error('Upload document failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Document upload failed'
+    });
+  }
+};
+
+module.exports.uploadDocument = uploadDocument;
