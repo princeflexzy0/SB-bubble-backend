@@ -33,7 +33,7 @@ describe('Input Validation', () => {
     test('should reject file upload without required fields', async () => {
       const res = await request(app)
         .post('/api/v1/files/upload-url')
-        .set('x-api-key', apiKey)
+        .set('x-api-key', 'test-key')
         .set('Authorization', 'Bearer mock-token')
         .send({});
       
@@ -46,7 +46,7 @@ describe('Input Validation', () => {
     test('should reject payment without amount', async () => {
       const res = await request(app)
         .post('/api/v1/pay/stripe/create')
-        .set('x-api-key', apiKey)
+        .set('x-api-key', 'test-key')
         .set('Authorization', 'Bearer mock-token')
         .send({
           currency: 'USD'
@@ -60,7 +60,7 @@ describe('Input Validation', () => {
     test('should reject AI extract without input', async () => {
       const res = await request(app)
         .post('/api/v1/ai/extract')
-        .set('x-api-key', apiKey)
+        .set('x-api-key', 'test-key')
         .set('Authorization', 'Bearer mock-token')
         .send({});
       

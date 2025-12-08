@@ -20,7 +20,7 @@ describe('Rate Limiting', () => {
     test('should apply stricter limits to auth endpoints', async () => {
       const res = await request(app)
         .post('/api/v1/auth/signin')
-        .set('x-api-key', apiKey)
+        .set('x-api-key', 'test-key')
         .send({
           email: 'test@example.com',
           password: 'password123'

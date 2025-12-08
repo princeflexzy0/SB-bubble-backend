@@ -10,5 +10,9 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   verbose: true,
-  testTimeout: 10000
+  testTimeout: 10000,
+  moduleNameMapper: {
+    '^../config/database$': '<rootDir>/tests/__mocks__/database.js',
+    '^../../config/database$': '<rootDir>/tests/__mocks__/database.js'
+  }
 };
