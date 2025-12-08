@@ -1,20 +1,23 @@
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const db = require('../../config/database');
+const { pool } = require('../../config/database');
 const env = require('../../config/env');
 
+// Hash token for storage
+function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 class TokenService {
-  // Generate access token (short-lived)
   generateAccessToken(userId) {
     return jwt.sign(
       { userId, type: 'access' },
-      env.JWT_ACCESS_SECRET,
-      { expiresIn: env.JWT_ACCESS_EXPIRY }
+      env.JWT_SECRET,
+      { expiresIn: env.JWT_EXPIRY }
     );
   }
 
-  // Generate refresh token (long-lived)
   generateRefreshToken(userId) {
     return jwt.sign(
       { userId, type: 'refresh', jti: uuidv4() },
@@ -23,160 +26,66 @@ class TokenService {
     );
   }
 
-  // Generate both access and refresh tokens
-  async generateTokenPair(userId, ipAddress = null, userAgent = null) {
-    try {
-      const accessToken = this.generateAccessToken(userId);
-      const refreshToken = this.generateRefreshToken(userId);
-      
-      // Store refresh token in database
-      await this.storeRefreshToken(userId, refreshToken, ipAddress, userAgent);
-      
-      return {
-        accessToken,
-        refreshToken
-      };
-    } catch (error) {
-      logger.error('[token-service] error: Generate token pair failed', { error: error.message });
-      throw new Error('Failed to generate token pair');
+  async storeRefreshToken(userId, refreshToken, ipAddress, userAgent) {
+    const hashedToken = hashToken(refreshToken);
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET);
+    
+    await pool.query(
+      `INSERT INTO refresh_tokens (user_id, token_hash, expires_at, ip_address, user_agent, jti)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [userId, hashedToken, new Date(decoded.exp * 1000), ipAddress, userAgent, decoded.jti]
+    );
+  }
+
+  async validateRefreshToken(refreshToken) {
+    const hashedToken = hashToken(refreshToken);
+    const result = await pool.query(
+      `SELECT rt.*, u.id as user_id, u.email 
+       FROM refresh_tokens rt
+       JOIN users u ON rt.user_id = u.id
+       WHERE rt.token_hash = $1 
+       AND rt.revoked = false 
+       AND rt.expires_at > NOW()`,
+      [hashedToken]
+    );
+    
+    if (result.rows.length === 0) {
+      return null;
     }
+    
+    return result.rows[0];
   }
 
-  // Store refresh token in database with token_family
-  async storeRefreshToken(userId, token, ipAddress = null, userAgent = null) {
-    try {
-      const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET);
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-      const expiresAt = new Date(decoded.exp * 1000);
-      const tokenFamily = uuidv4();
+  async revokeRefreshToken(refreshToken, reason = 'manual_revoke') {
+    const hashedToken = hashToken(refreshToken);
+    await pool.query(
+      `UPDATE refresh_tokens 
+       SET revoked = true, revoked_at = NOW(), revoked_reason = $1
+       WHERE token_hash = $2`,
+      [reason, hashedToken]
+    );
+  }
 
-      const query = `
-        INSERT INTO refresh_tokens (user_id, token_hash, token_family, expires_at, ip_address, user_agent, revoked)
-        VALUES ($1, $2, $3, $4, $5, $6, false)
-        RETURNING id
-      `;
+  async generateTokenPair(userId, ipAddress, userAgent) {
+    const accessToken = this.generateAccessToken(userId);
+    const refreshToken = this.generateRefreshToken(userId);
+    
+    await this.storeRefreshToken(userId, refreshToken, ipAddress, userAgent);
+    
+    return { accessToken, refreshToken };
+  }
 
-      const result = await db.query(query, [
-        userId,
-        tokenHash,
-        tokenFamily,
-        expiresAt,
-        ipAddress,
-        userAgent
-      ]);
-
-      return result.rows[0];
-    } catch (error) {
-      logger.error('[token-service] error: Store refresh token failed', { error: error.message });
-      throw new Error('Failed to store refresh token');
+  async rotateRefreshToken(oldRefreshToken, ipAddress, userAgent) {
+    const tokenData = await this.validateRefreshToken(oldRefreshToken);
+    
+    if (!tokenData) {
+      throw new Error('Invalid or expired refresh token');
     }
+    
+    await this.revokeRefreshToken(oldRefreshToken, 'token_rotation');
+    
+    return this.generateTokenPair(tokenData.user_id, ipAddress, userAgent);
   }
-
-  // Verify and decode token
-  verifyToken(token, type = 'access') {
-    try {
-      const secret = type === 'access' ? env.JWT_ACCESS_SECRET : env.JWT_REFRESH_SECRET;
-      return jwt.verify(token, secret);
-    } catch (error) {
-      if (error.name === 'TokenExpiredError') {
-        throw new Error('Token has expired');
-      }
-      throw new Error('Invalid token');
-    }
-  }
-
-  // Check if refresh token is valid and not revoked
-  async validateRefreshToken(token) {
-    try {
-      const decoded = this.verifyToken(token, 'refresh');
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-      const query = `
-        SELECT rt.*, u.email, u.email_verified
-        FROM refresh_tokens rt
-        JOIN users u ON rt.user_id = u.id
-        WHERE rt.token_hash = $1
-          AND rt.expires_at > NOW()
-          AND rt.revoked = false
-      `;
-
-      const result = await db.query(query, [tokenHash]);
-
-      if (result.rows.length === 0) {
-        throw new Error('Invalid or revoked refresh token');
-      }
-
-      return {
-        valid: true,
-        userId: decoded.userId,
-        user: result.rows[0]
-      };
-    } catch (error) {
-      logger.error('[token-service] error: Validate refresh token failed', { error: error.message });
-      throw error;
-    }
-  }
-
-  // Revoke a specific refresh token
-  async revokeRefreshToken(token) {
-    try {
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-      const query = `
-        UPDATE refresh_tokens
-        SET revoked = true, revoked_at = NOW()
-        WHERE token_hash = $1
-        RETURNING id
-      `;
-
-      const result = await db.query(query, [tokenHash]);
-      return result.rows.length > 0;
-    } catch (error) {
-      logger.error('[token-service] error: Revoke refresh token failed', { error: error.message });
-      throw new Error('Failed to revoke refresh token');
-    }
-  }
-
-  // Revoke all refresh tokens for a user
-  async revokeAllUserTokens(userId) {
-    try {
-      const query = `
-        UPDATE refresh_tokens
-        SET revoked = true, revoked_at = NOW()
-        WHERE user_id = $1 AND revoked = false
-        RETURNING id
-      `;
-
-      const result = await db.query(query, [userId]);
-      return result.rows.length;
-    } catch (error) {
-      logger.error('[token-service] error: Revoke all user tokens failed', { error: error.message });
-      throw new Error('Failed to revoke user tokens');
-    }
-  }
-
-  // Clean up expired tokens (maintenance task)
-  async cleanupExpiredTokens() {
-    try {
-      const query = `
-        DELETE FROM refresh_tokens
-        WHERE expires_at < NOW() - INTERVAL '30 days'
-      `;
-
-      const result = await db.query(query);
-      return result.rowCount;
-    } catch (error) {
-      logger.error('[token-service] error: Cleanup expired tokens failed', { error: error.message });
-      throw new Error('Failed to cleanup expired tokens');
-    }
-  }
-
-  // Alias for validateRefreshToken (used by auth controller)
-  async verifyRefreshToken(token) {
-    return await this.validateRefreshToken(token);
-  }
-
 }
 
 module.exports = new TokenService();
-// Build timestamp: 1764758682

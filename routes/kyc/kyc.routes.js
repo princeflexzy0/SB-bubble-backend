@@ -1,16 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const kycController = require('../../controllers/kyc/kyc.controller');
-const { authenticate } = require('../../middleware/auth.middleware');
+const { authenticate, authenticateAdmin } = require('../../middleware/auth.middleware');
+const { validateApiKey } = require('../../middleware/security');
+const { validateHmacSignature } = require('../../middleware/hmac.middleware');
 
-router.post('/start', authenticate, kycController.startKYC);
-router.post('/consent', authenticate, kycController.submitConsent);
-router.get('/options', authenticate, kycController.getOptions);
-router.post('/upload-url', authenticate, kycController.getUploadUrl);
-router.post('/confirm-upload', authenticate, kycController.confirmUpload);
-router.post('/send-otp', authenticate, kycController.sendOTP);
-router.post('/verify-otp', authenticate, kycController.verifyOTP);
-router.get('/status/:kycSessionId', authenticate, kycController.getStatus);
-router.post('/change-id-type', authenticate, kycController.changeIDType);
+// All KYC routes need authentication
+router.use(validateHmacSignature);
+router.use(validateApiKey);
+router.use(authenticate);
+
+// User KYC routes
+router.post('/start', kycController.startKYC);
+router.post('/:sessionId/upload', kycController.uploadDocument);
+router.get('/:sessionId/status', kycController.getStatus);
+
+// Admin-only routes
+router.post('/:sessionId/approve', authenticateAdmin, kycController.approveKYC);
+router.post('/:sessionId/reject', authenticateAdmin, kycController.rejectKYC);
+router.get('/admin/pending', authenticateAdmin, kycController.getPendingSessions);
 
 module.exports = router;

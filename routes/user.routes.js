@@ -1,57 +1,20 @@
-const { authenticate } = require('../middleware/auth.middleware');
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/user.controller');
-const { validateUpdateProfile, validateDeactivate } = require('../validation/user.validation');
-const { auditLog, SENSITIVE_ACTIONS } = require('../middleware/auditLog.middleware');
-const rateLimit = require('express-rate-limit');
+const { authenticate } = require('../middleware/auth.middleware');
+const { validateApiKey } = require('../middleware/security');
+const { validateHmacSignature } = require('../middleware/hmac.middleware');
+const uploadValidator = require('../middleware/upload-validator');
 
-// Rate limiter for sensitive operations
-const sensitiveOpLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
-  message: {
-    status: 'error',
-    code: 429,
-    message: 'Too many attempts. Please try again later.'
-  }
-});
+// Apply security layers: HMAC -> API Key -> JWT Auth
+router.use(validateHmacSignature);
+router.use(validateApiKey);
+router.use(authenticate);
 
-/**
- * @route   GET /api/v1/user/profile
- * @desc    Get user profile
- * @access  Private
- */
-router.get('/profile', authenticate, userController.getProfile);
-
-/**
- * @route   PUT /api/v1/user/profile
- * @desc    Update user profile (with validation, sanitization & audit logging)
- * @access  Private
- */
-router.put('/profile', 
-  validateUpdateProfile,
-  auditLog(SENSITIVE_ACTIONS.PROFILE_UPDATED, 'user'),
-  userController.updateProfile
-);
-
-/**
- * @route   GET /api/v1/user/stats
- * @desc    Get user statistics
- * @access  Private
- */
-router.get('/stats', userController.getStats);
-
-/**
- * @route   DELETE /api/v1/user/deactivate
- * @desc    Deactivate user account (with validation, rate limiting & audit logging)
- * @access  Private
- */
-router.delete('/deactivate', 
-  sensitiveOpLimiter,
-  validateDeactivate,
-  auditLog(SENSITIVE_ACTIONS.ACCOUNT_DEACTIVATED, 'user'),
-  userController.deactivate
-);
+// User routes
+router.get('/profile', userController.getProfile);
+router.put('/profile', userController.updateProfile);
+router.post('/upload', uploadValidator.validateFileUpload, userController.uploadFile);
+router.delete('/account', userController.deleteAccount);
 
 module.exports = router;
