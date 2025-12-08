@@ -673,28 +673,6 @@ const appleRevoke = async (req, res) => {
 
 // Export new methods
 // Correct exports matching actual function names
-module.exports = {
-  register,
-  login,
-  logout,
-  refresh,              // NOT refreshToken
-  resetPassword,
-  confirmPasswordReset,
-  changePassword,
-  magicLinkLogin,
-  verifyMagicLink,
-  googleCallback,
-  appleCallback,
-  getMe,
-  linkGoogle,
-  linkApple,
-  appleToken,
-  appleRefresh,
-  appleRevoke,
-  googleStart,
-  appleStart,
-  verifyEmail
-};
 
 // Confirm Password Reset
 const confirmPasswordReset = async (req, res) => {
@@ -867,7 +845,8 @@ const verifyMagicLink = async (req, res) => {
 };
 
 
-// Complete exports
+
+// Export all functions - MUST be at end of file
 module.exports = {
   register,
   login,
