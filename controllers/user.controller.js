@@ -69,7 +69,7 @@ class UserController {
         });
       }
       
-      const result = await fileService.uploadUserFile(userId, file);
+      const result = await fileService.uploadFile(file, userId);
       
       res.status(200).json({
         success: true,
