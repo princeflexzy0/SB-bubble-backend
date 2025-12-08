@@ -4,7 +4,7 @@ const kycController = require('../../controllers/kyc/kyc.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
 const { requireRole } = require('../../middleware/rbac.middleware');
 const { validateApiKey } = require('../../middleware/security');
-const { validateHmacSignature } = require('../middleware/validateHmacSignature')
+const { validateHmacSignature } = require('../../middleware/validateHmacSignature')
 
 // All KYC routes need authentication
 router.use(validateHmacSignature);

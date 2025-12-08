@@ -1,5 +1,9 @@
 const { cleanEnv, str, port, num, bool, url } = require('envalid');
 
+// In test mode, make all vars optional with defaults
+const isTest = process.env.NODE_ENV === 'test';
+
+
 module.exports = cleanEnv(process.env, {
   // Server
   NODE_ENV: str({ choices: ['development', 'production', 'test'], default: 'development' }),
@@ -12,7 +16,7 @@ module.exports = cleanEnv(process.env, {
 
   // JWT
   JWT_SECRET: str({ default: 'fallback-secret' }),
-  JWT_ACCESS_SECRET: str(),
+  JWT_ACCESS_SECRET: str({ default: isTest ? 'test-jwt-access' : undefined }),
   JWT_REFRESH_SECRET: str(),
   ENCRYPTION_KEY: str({ desc: 'Encryption key for PII data', default: 'default-encryption-key-change-in-production' }),
   JWT_ACCESS_EXPIRY: str({ default: '15m' }),
