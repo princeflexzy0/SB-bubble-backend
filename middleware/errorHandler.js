@@ -1,4 +1,5 @@
-const logger = require('../utils/logger');
+const { createLogger } = require('../config/monitoring');
+const logger = createLogger('error-handler');
 
 class AppError extends Error {
   constructor(message, statusCode) {
@@ -9,42 +10,32 @@ class AppError extends Error {
   }
 }
 
-const errorHandler = (err, req, res, _next) => {
+const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
-  // Log error
+  // Log error with full details
   logger.error('Error occurred', {
-    error: err.message,
-    stack: err.stack,
-    requestId: req.id,
+    message: err.message,
+    statusCode: err.statusCode,
     path: req.path,
-    method: req.method
+    method: req.method,
+    stack: err.stack
   });
 
-  // Development environment - send full error
-  if (process.env.NODE_ENV === 'development') {
-    return res.status(err.statusCode).json({
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack
-    });
+  // Prepare response
+  const response = {
+    success: false,
+    error: err.message || 'Internal server error',
+    code: err.statusCode
+  };
+
+  // ONLY include stack trace in development
+  if (process.env.NODE_ENV !== 'production') {
+    response.stack = err.stack;
   }
 
-  // Production environment - send limited error info
-  if (err.isOperational) {
-    return res.status(err.statusCode).json({
-      status: err.status,
-      message: err.message
-    });
-  }
-
-  // Programming or unknown errors - don't leak details
-  return res.status(500).json({
-    status: 'error',
-    message: 'Something went wrong'
-  });
+  res.status(err.statusCode).json(response);
 };
 
 module.exports = { AppError, errorHandler };
