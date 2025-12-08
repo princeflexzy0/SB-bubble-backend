@@ -695,3 +695,198 @@ module.exports = {
   appleStart,
   verifyEmail
 };
+
+// Confirm Password Reset
+const confirmPasswordReset = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token and new password required'
+      });
+    }
+
+    // Hash the token
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find valid reset token
+    const result = await pool.query(
+      `SELECT user_id, expires_at 
+       FROM password_reset_tokens 
+       WHERE token_hash = $1 AND expires_at > NOW()`,
+      [hashedToken]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid or expired reset token'
+      });
+    }
+
+    const userId = result.rows[0].user_id;
+
+    // Hash new password
+    const bcrypt = require('bcrypt');
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [passwordHash, userId]
+    );
+
+    // Delete used token
+    await pool.query(
+      'DELETE FROM password_reset_tokens WHERE token_hash = $1',
+      [hashedToken]
+    );
+
+    logger.info('Password reset confirmed', { userId });
+
+    res.json({
+      success: true,
+      message: 'Password reset successful'
+    });
+  } catch (error) {
+    logger.error('Password reset confirmation failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Password reset failed'
+    });
+  }
+};
+
+// Magic Link Login
+const magicLinkLogin = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Email required'
+      });
+    }
+
+    // Find or create user
+    let userResult = await pool.query(
+      'SELECT id, email FROM users WHERE email = $1',
+      [email]
+    );
+
+    let userId;
+    if (userResult.rows.length === 0) {
+      // Create new user
+      const newUser = await pool.query(
+        `INSERT INTO users (email, email_verified) 
+         VALUES ($1, false) 
+         RETURNING id, email`,
+        [email]
+      );
+      userId = newUser.rows[0].id;
+    } else {
+      userId = userResult.rows[0].id;
+    }
+
+    // Generate magic link
+    const magicLinkService = require('../../services/auth/magic.link.service');
+    await magicLinkService.generateMagicLink(userId, email, req.ip);
+
+    logger.info('Magic link sent', { email });
+
+    res.json({
+      success: true,
+      message: 'Magic link sent to your email'
+    });
+  } catch (error) {
+    logger.error('Magic link login failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Magic link generation failed'
+    });
+  }
+};
+
+// Verify Magic Link
+const verifyMagicLink = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token required'
+      });
+    }
+
+    const magicLinkService = require('../../services/auth/magic.link.service');
+    const userId = await magicLinkService.verifyMagicLink(token);
+
+    // Generate tokens
+    const userResult = await pool.query(
+      'SELECT id, email, role FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const user = userResult.rows[0];
+    const tokens = await tokenService.generateTokenPair({
+      id: user.id,
+      email: user.email,
+      role: user.role || 'user'
+    });
+
+    // Mark email as verified
+    await pool.query(
+      'UPDATE users SET email_verified = true WHERE id = $1',
+      [userId]
+    );
+
+    logger.info('Magic link verified', { userId });
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role
+        },
+        tokens
+      }
+    });
+  } catch (error) {
+    logger.error('Magic link verification failed', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: 'Invalid or expired magic link'
+    });
+  }
+};
+
+
+// Complete exports
+module.exports = {
+  register,
+  login,
+  refresh,
+  logout,
+  googleStart,
+  googleCallback,
+  appleStart,
+  appleCallback,
+  getMe,
+  linkGoogle,
+  linkApple,
+  changePassword,
+  resetPassword,
+  confirmPasswordReset,
+  magicLinkLogin,
+  verifyMagicLink,
+  verifyEmail,
+  appleToken,
+  appleRefresh,
+  appleRevoke
+};
