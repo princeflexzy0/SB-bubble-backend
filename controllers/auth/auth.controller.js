@@ -541,26 +541,6 @@ const verifyEmail = async (req, res) => {
   }
 };
 
-module.exports = {
-  register,
-  signUp: register,
-  login,
-  signIn: login,
-  refresh,
-  refreshToken: refresh,
-  logout,
-  signOut: logout,
-  googleStart,
-  googleCallback,
-  appleStart,
-  appleCallback,
-  getMe,
-  linkGoogle,
-  linkApple,
-  changePassword,
-  resetPassword,
-  verifyEmail
-};
 
 // Apple Token Exchange
 const appleToken = async (req, res) => {
@@ -692,11 +672,12 @@ const appleRevoke = async (req, res) => {
 };
 
 // Export new methods
+// Correct exports matching actual function names
 module.exports = {
   register,
   login,
   logout,
-  refreshToken,
+  refresh,              // NOT refreshToken
   resetPassword,
   confirmPasswordReset,
   changePassword,
@@ -707,7 +688,10 @@ module.exports = {
   getMe,
   linkGoogle,
   linkApple,
-  appleToken,      // NEW
-  appleRefresh,    // NEW
-  appleRevoke      // NEW
+  appleToken,
+  appleRefresh,
+  appleRevoke,
+  googleStart,
+  appleStart,
+  verifyEmail
 };
