@@ -14,7 +14,7 @@ router.use(authenticate);
 // User routes
 router.get('/profile', userController.getProfile);
 router.put('/profile', userController.updateProfile);
-router.post('/upload', uploadValidator.validateFileUpload, userController.uploadFile);
+router.post('/upload', uploadValidator.validateUpload, userController.uploadFile);
 router.delete('/account', userController.deleteAccount);
 
 module.exports = router;
