@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../../controllers/payment/payment.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
+const { checkIdempotency } = require('../../middleware/idempotency.middleware');
 const { requireValidKYC } = require('../../middleware/kyc.middleware');
 const { 
   validateStripeIP,
@@ -29,6 +30,7 @@ router.post('/grace-activate', authenticate, paymentController.activateGraceTier
 
 // All other payment routes require authentication + valid KYC
 router.use(authenticate);
+router.use(checkIdempotency);
 router.use(requireValidKYC);
 
 // Customer & Subscription Management

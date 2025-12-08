@@ -53,6 +53,7 @@
     "ioredis": "^5.8.2",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
+    "jwk-to-pem": "^2.0.7",
     "jwks-rsa": "^3.2.0",
     "maxmind": "^4.3.11",
     "multer": "^1.4.5-lts.1",

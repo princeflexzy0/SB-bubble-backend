@@ -62,3 +62,8 @@ module.exports = server;
 server.timeout = 30000;
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
+
+// Initialize background workers
+if (process.env.START_WORKERS === 'true') {
+  require('./workers/index');
+}

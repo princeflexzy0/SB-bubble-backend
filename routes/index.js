@@ -68,4 +68,6 @@ router.use('*', (req, res) => {
   });
 });
 
+router.use('/upload', uploadRoutes);
+const uploadRoutes = require('./upload.routes');
 module.exports = router;

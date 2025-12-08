@@ -561,3 +561,153 @@ module.exports = {
   resetPassword,
   verifyEmail
 };
+
+// Apple Token Exchange
+const appleToken = async (req, res) => {
+  try {
+    const { code, id_token } = req.body;
+    
+    if (!code && !id_token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing code or id_token'
+      });
+    }
+
+    const appleService = require('../../services/auth/apple.auth.service');
+    
+    // Verify Apple token and get user
+    const userRecord = await appleService.verifyAppleToken(
+      id_token || code,
+      req.ip,
+      req.headers['user-agent']
+    );
+
+    // Generate our tokens
+    const tokens = await tokenService.generateTokenPair({
+      id: userRecord.id,
+      email: userRecord.email,
+      role: userRecord.role || 'user'
+    });
+
+    logger.info('Apple token exchange successful', { userId: userRecord.id });
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: userRecord.id,
+          email: userRecord.email,
+          role: userRecord.role
+        },
+        tokens
+      }
+    });
+  } catch (error) {
+    logger.error('Apple token exchange failed', { error: error.message });
+    res.status(400).json({
+      success: false,
+      error: 'Apple authentication failed'
+    });
+  }
+};
+
+// Apple Token Refresh
+const appleRefresh = async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+    
+    if (!refresh_token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing refresh_token'
+      });
+    }
+
+    // Validate and rotate refresh token
+    const result = await tokenService.rotateRefreshToken(
+      refresh_token,
+      req.ip,
+      req.headers['user-agent']
+    );
+
+    if (!result.success) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired refresh token'
+      });
+    }
+
+    logger.info('Apple token refreshed', { userId: result.userId });
+
+    res.json({
+      success: true,
+      data: {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken
+      }
+    });
+  } catch (error) {
+    logger.error('Apple token refresh failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Token refresh failed'
+    });
+  }
+};
+
+// Apple Token Revocation
+const appleRevoke = async (req, res) => {
+  try {
+    const { token, token_type_hint } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing token'
+      });
+    }
+
+    // Revoke the token
+    if (token_type_hint === 'refresh_token' || !token_type_hint) {
+      await tokenService.revokeRefreshToken(token);
+    }
+
+    // Also revoke in Apple's system if needed
+    // (Apple doesn't require server-side revocation, but we track it)
+
+    logger.info('Apple token revoked', { tokenType: token_type_hint });
+
+    res.json({
+      success: true,
+      message: 'Token revoked successfully'
+    });
+  } catch (error) {
+    logger.error('Apple token revocation failed', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Token revocation failed'
+    });
+  }
+};
+
+// Export new methods
+module.exports = {
+  register,
+  login,
+  logout,
+  refreshToken,
+  resetPassword,
+  confirmPasswordReset,
+  changePassword,
+  magicLinkLogin,
+  verifyMagicLink,
+  googleCallback,
+  appleCallback,
+  getMe,
+  linkGoogle,
+  linkApple,
+  appleToken,      // NEW
+  appleRefresh,    // NEW
+  appleRevoke      // NEW
+};

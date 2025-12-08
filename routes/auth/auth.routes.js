@@ -44,3 +44,8 @@ router.post('/link/google', authenticate, authController.linkGoogle);
 router.post('/link/apple', authenticate, authController.linkApple);
 
 module.exports = router;
+
+// Apple OAuth Token Management
+router.post('/apple/token', authController.appleToken);
+router.post('/apple/refresh', authController.appleRefresh);
+router.post('/apple/revoke', authController.appleRevoke);
