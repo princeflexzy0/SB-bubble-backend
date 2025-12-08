@@ -8,7 +8,6 @@ router.post('/run-rls-migration', rlsMigrationController.runRLSMigration);
 
 const adminController = require('../../controllers/admin/admin.controller');
 const migrationController = require('../../controllers/admin/migration.controller');
-const { requireRole('admin') } = require('../../middleware/auth.middleware');
 
 // All admin routes require admin authentication
 router.use(requireRole('admin'));

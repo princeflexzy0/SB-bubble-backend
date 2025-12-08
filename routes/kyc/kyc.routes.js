@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const kycController = require('../../controllers/kyc/kyc.controller');
-const { authenticate, requireRole('admin') } = require('../../middleware/auth.middleware');
+const { authenticate } = require('../../middleware/auth.middleware');
+const { requireRole } = require('../../middleware/rbac.middleware');
 const { validateApiKey } = require('../../middleware/security');
 const { validateHmacSignature } = require('../../middleware/hmac.middleware');
 
