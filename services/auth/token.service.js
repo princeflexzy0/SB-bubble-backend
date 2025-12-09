@@ -14,7 +14,7 @@ class TokenService {
     return jwt.sign(
       { userId, type: 'access' },
       env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRY }
+      { expiresIn: env.JWT_ACCESS_EXPIRY }
     );
   }
 
