@@ -69,6 +69,6 @@ if (process.env.START_WORKERS === 'true') {
 }
 
 // Run migrations on startup in production
-if (env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production') {
   require('./scripts/run-migrations');
 }
